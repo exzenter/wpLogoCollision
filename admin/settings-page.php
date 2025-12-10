@@ -47,13 +47,29 @@ function caa_sanitize_percent($value) {
     return (string) $int_value;
 }
 
+function caa_sanitize_move_away($value) {
+    $value = trim($value);
+    if ($value === '' || $value === null) {
+        return '';
+    }
+    // Check if it ends with % or px
+    if (preg_match('/^([+-]?\d+(?:\.\d+)?)(px|%)$/i', $value, $matches)) {
+        $number = floatval($matches[1]);
+        $unit = strtolower($matches[2]);
+        return (string) $number . $unit;
+    }
+    // If no unit, assume px
+    $number = floatval($value);
+    return (string) $number . 'px';
+}
+
 function caa_sanitize_ease($value) {
     $valid_eases = array('power1', 'power2', 'power3', 'power4', 'expo', 'sine', 'back', 'elastic', 'bounce', 'none');
     return in_array($value, $valid_eases, true) ? $value : 'power4';
 }
 
-// Handle Pro Version form submission
-if (isset($_POST['caa_save_mappings']) && check_admin_referer('caa_pro_settings_nonce')) {
+// Handle Mappings form submission
+if (isset($_POST['caa_save_mappings']) && check_admin_referer('caa_pro_mappings_nonce')) {
     $mappings = array();
     if (isset($_POST['caa_mappings']) && is_array($_POST['caa_mappings'])) {
         foreach ($_POST['caa_mappings'] as $mapping) {
@@ -70,7 +86,45 @@ if (isset($_POST['caa_save_mappings']) && check_admin_referer('caa_pro_settings_
         }
     }
     update_option('caa_pro_effect_mappings', $mappings);
+    
     echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Mappings saved.', 'logo-collision') . '</p></div>';
+}
+
+// Handle Filtering form submission
+if (isset($_POST['caa_save_filtering']) && check_admin_referer('caa_pro_filtering_nonce')) {
+    // Handle filtering settings
+    update_option('caa_pro_enable_filtering', isset($_POST['caa_pro_enable_filtering']) ? '1' : '0');
+    update_option('caa_pro_filter_mode', isset($_POST['caa_pro_filter_mode']) ? sanitize_text_field(wp_unslash($_POST['caa_pro_filter_mode'])) : 'include');
+    
+    // Handle post types
+    $selected_post_types = array();
+    if (isset($_POST['caa_pro_post_types']) && is_array($_POST['caa_pro_post_types'])) {
+        $valid_post_types = array_keys(get_post_types(array('public' => true), 'names'));
+        foreach ($_POST['caa_pro_post_types'] as $post_type) {
+            $post_type = sanitize_text_field(wp_unslash($post_type));
+            if (in_array($post_type, $valid_post_types, true)) {
+                $selected_post_types[] = $post_type;
+            }
+        }
+    }
+    update_option('caa_pro_selected_post_types', $selected_post_types);
+    
+    update_option('caa_pro_include_pages', isset($_POST['caa_pro_include_pages']) ? '1' : '0');
+    update_option('caa_pro_include_posts', isset($_POST['caa_pro_include_posts']) ? '1' : '0');
+    
+    // Handle selected items
+    $selected_items = array();
+    if (isset($_POST['caa_pro_selected_items']) && is_array($_POST['caa_pro_selected_items'])) {
+        foreach ($_POST['caa_pro_selected_items'] as $item_id) {
+            $item_id = absint($item_id);
+            if ($item_id > 0) {
+                $selected_items[] = $item_id;
+            }
+        }
+    }
+    update_option('caa_pro_selected_items', array_unique($selected_items));
+    
+    echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Filtering settings saved.', 'logo-collision') . '</p></div>';
 }
 
 // Handle General Settings form submission
@@ -115,6 +169,9 @@ if (isset($_POST['caa_save_settings']) && check_admin_referer('caa_settings_nonc
     update_option('caa_effect6_origin_x', isset($_POST['caa_effect6_origin_x']) ? caa_sanitize_percent(sanitize_text_field(wp_unslash($_POST['caa_effect6_origin_x']))) : '0');
     update_option('caa_effect6_origin_y', isset($_POST['caa_effect6_origin_y']) ? caa_sanitize_percent(sanitize_text_field(wp_unslash($_POST['caa_effect6_origin_y']))) : '100');
     
+    // Effect 7: Move Away
+    update_option('caa_effect7_move_distance', isset($_POST['caa_effect7_move_distance']) ? caa_sanitize_move_away(sanitize_text_field(wp_unslash($_POST['caa_effect7_move_distance']))) : '');
+    
     echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Settings saved.', 'logo-collision') . '</p></div>';
 }
 
@@ -154,6 +211,17 @@ $effect6_x_percent = get_option('caa_effect6_x_percent', '-5');
 $effect6_origin_x = get_option('caa_effect6_origin_x', '0');
 $effect6_origin_y = get_option('caa_effect6_origin_y', '100');
 
+$effect7_move_distance = get_option('caa_effect7_move_distance', '');
+
+// Get Pro Version filtering settings
+$enable_filtering = get_option('caa_pro_enable_filtering', '0');
+$filter_mode = get_option('caa_pro_filter_mode', 'include');
+$selected_post_types = get_option('caa_pro_selected_post_types', array());
+$include_pages = get_option('caa_pro_include_pages', '0');
+$include_posts = get_option('caa_pro_include_posts', '0');
+$selected_items = get_option('caa_pro_selected_items', array());
+$all_post_types = get_post_types(array('public' => true), 'objects');
+
 // Enqueue admin CSS
 wp_enqueue_style(
     'caa-admin',
@@ -162,14 +230,24 @@ wp_enqueue_style(
     CAA_VERSION
 );
 
+// Enqueue jQuery UI autocomplete
+wp_enqueue_script('jquery-ui-autocomplete');
+
 // Enqueue admin JavaScript for accordion functionality
 wp_enqueue_script(
     'caa-admin',
     CAA_PLUGIN_URL . 'assets/js/admin.js',
-    array('jquery'),
+    array('jquery', 'jquery-ui-autocomplete'),
     CAA_VERSION,
     true
 );
+
+// Localize script with AJAX data
+wp_localize_script('caa-admin', 'caaAdmin', array(
+    'ajaxUrl' => admin_url('admin-ajax.php'),
+    'nonce' => wp_create_nonce('caa_admin_nonce'),
+    'selectedItems' => $selected_items
+));
 ?>
 
 <div class="wrap">
@@ -780,9 +858,26 @@ wp_enqueue_script(
                                 </label>
                                 <div class="caa-effect-accordion" data-effect="7" <?php echo $selected_effect === '7' ? 'style="display: block;"' : ''; ?>>
                                     <div class="caa-accordion-content">
-                                        <p class="description" style="margin-top: 10px; padding: 10px; background: #f0f0f1; border-left: 4px solid #2271b1;">
-                                            <?php esc_html_e('This effect uses global animation settings only. No additional configuration is required.', 'logo-collision'); ?>
-                                        </p>
+                                        <table class="form-table" style="margin-top: 10px;">
+                                            <tr>
+                                                <th scope="row" style="width: 200px;">
+                                                    <label for="caa_effect7_move_distance"><?php esc_html_e('Move Distance', 'logo-collision'); ?></label>
+                                                </th>
+                                                <td>
+                                                    <input 
+                                                        type="text" 
+                                                        id="caa_effect7_move_distance" 
+                                                        name="caa_effect7_move_distance" 
+                                                        value="<?php echo esc_attr($effect7_move_distance); ?>" 
+                                                        class="regular-text"
+                                                        placeholder="auto"
+                                                    />
+                                                    <p class="description">
+                                                        <?php esc_html_e('Distance to move the logo (e.g., "100px" or "50%"). Leave empty for default behavior (moves by logo width).', 'logo-collision'); ?>
+                                                    </p>
+                                                </td>
+                                            </tr>
+                                        </table>
                                     </div>
                                 </div>
                             </div>
@@ -882,91 +977,277 @@ wp_enqueue_script(
     
     <!-- Pro Version Tab -->
     <div id="pro-version" class="caa-tab-content">
-        <form method="post" action="">
-            <?php wp_nonce_field('caa_pro_settings_nonce'); ?>
+        <!-- Sub-tab Navigation -->
+        <nav class="nav-tab-wrapper caa-sub-tabs">
+            <a href="#pro-mappings" class="nav-tab nav-tab-active" data-subtab="pro-mappings">
+                <?php esc_html_e('Element Mappings', 'logo-collision'); ?>
+            </a>
+            <a href="#pro-filtering" class="nav-tab" data-subtab="pro-filtering">
+                <?php esc_html_e('Page Filtering', 'logo-collision'); ?>
+            </a>
+        </nav>
+        
+        <!-- Mappings Sub-tab -->
+        <div id="pro-mappings" class="caa-sub-tab-content caa-sub-tab-active">
+            <form method="post" action="">
+                <?php wp_nonce_field('caa_pro_mappings_nonce'); ?>
+                
+                <div class="caa-pro-header">
+                    <h2><?php esc_html_e('Element Effect Mappings', 'logo-collision'); ?></h2>
+                    <p class="description">
+                        <?php esc_html_e('Map specific elements to different effects. When the logo collides with these elements, the mapped effect will be used instead of the global default.', 'logo-collision'); ?>
+                    </p>
+                </div>
+                
+                <div class="caa-mappings-container">
+                    <div class="caa-mappings-header">
+                        <span class="caa-mapping-col-selector"><?php esc_html_e('Element Selector', 'logo-collision'); ?></span>
+                        <span class="caa-mapping-col-effect"><?php esc_html_e('Effect', 'logo-collision'); ?></span>
+                        <span class="caa-mapping-col-actions"><?php esc_html_e('Actions', 'logo-collision'); ?></span>
+                    </div>
+                    
+                    <div id="caa-mappings-list">
+                        <?php
+                        $effect_mappings = get_option('caa_pro_effect_mappings', array());
+                        if (empty($effect_mappings)) {
+                            $effect_mappings = array(array('selector' => '', 'effect' => '1'));
+                        }
+                        foreach ($effect_mappings as $index => $mapping) :
+                            $selector_value = isset($mapping['selector']) ? $mapping['selector'] : '';
+                            $effect_value = isset($mapping['effect']) ? $mapping['effect'] : '1';
+                        ?>
+                        <div class="caa-mapping-row">
+                            <div class="caa-mapping-col-selector">
+                                <input 
+                                    type="text" 
+                                    name="caa_mappings[<?php echo esc_attr($index); ?>][selector]" 
+                                    value="<?php echo esc_attr($selector_value); ?>" 
+                                    class="regular-text"
+                                    placeholder="#element-id or .class-name"
+                                />
+                            </div>
+                            <div class="caa-mapping-col-effect">
+                                <select name="caa_mappings[<?php echo esc_attr($index); ?>][effect]">
+                                    <option value="1" <?php selected($effect_value, '1'); ?>><?php esc_html_e('Effect 1: Scale', 'logo-collision'); ?></option>
+                                    <option value="2" <?php selected($effect_value, '2'); ?>><?php esc_html_e('Effect 2: Blur', 'logo-collision'); ?></option>
+                                    <option value="3" <?php selected($effect_value, '3'); ?>><?php esc_html_e('Effect 3: Slide Text', 'logo-collision'); ?></option>
+                                    <option value="4" <?php selected($effect_value, '4'); ?>><?php esc_html_e('Effect 4: Text Split', 'logo-collision'); ?></option>
+                                    <option value="5" <?php selected($effect_value, '5'); ?>><?php esc_html_e('Effect 5: Character Shuffle', 'logo-collision'); ?></option>
+                                    <option value="6" <?php selected($effect_value, '6'); ?>><?php esc_html_e('Effect 6: Rotation', 'logo-collision'); ?></option>
+                                    <option value="7" <?php selected($effect_value, '7'); ?>><?php esc_html_e('Effect 7: Move Away', 'logo-collision'); ?></option>
+                                </select>
+                            </div>
+                            <div class="caa-mapping-col-actions">
+                                <button type="button" class="button caa-remove-mapping" title="<?php esc_attr_e('Remove Mapping', 'logo-collision'); ?>">
+                                    <span class="dashicons dashicons-trash"></span>
+                                </button>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    
+                    <div class="caa-mappings-footer">
+                        <button type="button" id="caa-add-mapping" class="button button-secondary">
+                            <span class="dashicons dashicons-plus-alt2"></span>
+                            <?php esc_html_e('Add New Mapping', 'logo-collision'); ?>
+                        </button>
+                    </div>
+                </div>
+                
+                <?php submit_button(__('Save Mappings', 'logo-collision'), 'primary', 'caa_save_mappings'); ?>
+            </form>
             
-            <div class="caa-pro-header">
-                <h2><?php esc_html_e('Element Effect Mappings', 'logo-collision'); ?></h2>
-                <p class="description">
-                    <?php esc_html_e('Map specific elements to different effects. When the logo collides with these elements, the mapped effect will be used instead of the global default.', 'logo-collision'); ?>
+            <div class="caa-info-box" style="margin-top: 30px;">
+                <h2><?php esc_html_e('How Element Mappings Work', 'logo-collision'); ?></h2>
+                <p>
+                    <?php esc_html_e('Element mappings allow you to apply different effects to specific sections of your page.', 'logo-collision'); ?>
+                </p>
+                <p>
+                    <?php esc_html_e('For example, you might want:', 'logo-collision'); ?>
+                </p>
+                <ul>
+                    <li><?php esc_html_e('The logo to scale down when passing your hero section', 'logo-collision'); ?></li>
+                    <li><?php esc_html_e('The logo to blur when passing your portfolio section', 'logo-collision'); ?></li>
+                    <li><?php esc_html_e('The logo to rotate when passing your testimonials', 'logo-collision'); ?></li>
+                </ul>
+                <p>
+                    <?php esc_html_e('Enter a CSS selector (ID or class) and choose which effect to apply. The element must also be included in the "Include Elements" setting on the General Settings tab.', 'logo-collision'); ?>
                 </p>
             </div>
-            
-            <div class="caa-mappings-container">
-                <div class="caa-mappings-header">
-                    <span class="caa-mapping-col-selector"><?php esc_html_e('Element Selector', 'logo-collision'); ?></span>
-                    <span class="caa-mapping-col-effect"><?php esc_html_e('Effect', 'logo-collision'); ?></span>
-                    <span class="caa-mapping-col-actions"><?php esc_html_e('Actions', 'logo-collision'); ?></span>
-                </div>
-                
-                <div id="caa-mappings-list">
-                    <?php
-                    $effect_mappings = get_option('caa_pro_effect_mappings', array());
-                    if (empty($effect_mappings)) {
-                        $effect_mappings = array(array('selector' => '', 'effect' => '1'));
-                    }
-                    foreach ($effect_mappings as $index => $mapping) :
-                        $selector_value = isset($mapping['selector']) ? $mapping['selector'] : '';
-                        $effect_value = isset($mapping['effect']) ? $mapping['effect'] : '1';
-                    ?>
-                    <div class="caa-mapping-row">
-                        <div class="caa-mapping-col-selector">
-                            <input 
-                                type="text" 
-                                name="caa_mappings[<?php echo esc_attr($index); ?>][selector]" 
-                                value="<?php echo esc_attr($selector_value); ?>" 
-                                class="regular-text"
-                                placeholder="#element-id or .class-name"
-                            />
-                        </div>
-                        <div class="caa-mapping-col-effect">
-                            <select name="caa_mappings[<?php echo esc_attr($index); ?>][effect]">
-                                <option value="1" <?php selected($effect_value, '1'); ?>><?php esc_html_e('Effect 1: Scale', 'logo-collision'); ?></option>
-                                <option value="2" <?php selected($effect_value, '2'); ?>><?php esc_html_e('Effect 2: Blur', 'logo-collision'); ?></option>
-                                <option value="3" <?php selected($effect_value, '3'); ?>><?php esc_html_e('Effect 3: Slide Text', 'logo-collision'); ?></option>
-                                <option value="4" <?php selected($effect_value, '4'); ?>><?php esc_html_e('Effect 4: Text Split', 'logo-collision'); ?></option>
-                                <option value="5" <?php selected($effect_value, '5'); ?>><?php esc_html_e('Effect 5: Character Shuffle', 'logo-collision'); ?></option>
-                                <option value="6" <?php selected($effect_value, '6'); ?>><?php esc_html_e('Effect 6: Rotation', 'logo-collision'); ?></option>
-                                <option value="7" <?php selected($effect_value, '7'); ?>><?php esc_html_e('Effect 7: Move Away', 'logo-collision'); ?></option>
-                            </select>
-                        </div>
-                        <div class="caa-mapping-col-actions">
-                            <button type="button" class="button caa-remove-mapping" title="<?php esc_attr_e('Remove Mapping', 'logo-collision'); ?>">
-                                <span class="dashicons dashicons-trash"></span>
-                            </button>
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-                
-                <div class="caa-mappings-footer">
-                    <button type="button" id="caa-add-mapping" class="button button-secondary">
-                        <span class="dashicons dashicons-plus-alt2"></span>
-                        <?php esc_html_e('Add New Mapping', 'logo-collision'); ?>
-                    </button>
-                </div>
-            </div>
-            
-            <?php submit_button(__('Save Mappings', 'logo-collision'), 'primary', 'caa_save_mappings'); ?>
-        </form>
+        </div><!-- End Mappings Sub-tab -->
         
-        <div class="caa-info-box">
-            <h2><?php esc_html_e('How Element Mappings Work', 'logo-collision'); ?></h2>
-            <p>
-                <?php esc_html_e('Element mappings allow you to apply different effects to specific sections of your page.', 'logo-collision'); ?>
-            </p>
-            <p>
-                <?php esc_html_e('For example, you might want:', 'logo-collision'); ?>
-            </p>
-            <ul>
-                <li><?php esc_html_e('The logo to scale down when passing your hero section', 'logo-collision'); ?></li>
-                <li><?php esc_html_e('The logo to blur when passing your portfolio section', 'logo-collision'); ?></li>
-                <li><?php esc_html_e('The logo to rotate when passing your testimonials', 'logo-collision'); ?></li>
-            </ul>
-            <p>
-                <?php esc_html_e('Enter a CSS selector (ID or class) and choose which effect to apply. The element must also be included in the "Include Elements" setting on the General Settings tab.', 'logo-collision'); ?>
-            </p>
-        </div>
+        <!-- Filtering Sub-tab -->
+        <div id="pro-filtering" class="caa-sub-tab-content">
+            <form method="post" action="" id="caa-filtering-form">
+                <?php wp_nonce_field('caa_pro_filtering_nonce'); ?>
+                
+                <div class="caa-pro-header">
+                    <h2><?php esc_html_e('Page Filtering', 'logo-collision'); ?></h2>
+                    <p class="description">
+                        <?php esc_html_e('Control where the plugin runs. Choose to include or exclude specific post types, pages, posts, or individual items.', 'logo-collision'); ?>
+                    </p>
+                </div>
+                
+                <table class="form-table" role="presentation">
+                    <tbody>
+                        <tr>
+                            <th scope="row">
+                                <label for="caa_pro_enable_filtering"><?php esc_html_e('Enable Filtering', 'logo-collision'); ?></label>
+                            </th>
+                            <td>
+                                <label>
+                                    <input 
+                                        type="checkbox" 
+                                        id="caa_pro_enable_filtering" 
+                                        name="caa_pro_enable_filtering" 
+                                        value="1"
+                                        <?php checked($enable_filtering, '1'); ?>
+                                    />
+                                    <?php esc_html_e('Enable page filtering', 'logo-collision'); ?>
+                                </label>
+                                <p class="description">
+                                    <?php esc_html_e('When disabled, the plugin runs on all pages. When enabled, you can specify where the plugin should run.', 'logo-collision'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div id="caa-filtering-options" style="<?php echo $enable_filtering === '1' ? '' : 'display: none;'; ?>">
+                    <table class="form-table" role="presentation">
+                        <tbody>
+                            <tr>
+                                <th scope="row">
+                                    <label><?php esc_html_e('Filter Mode', 'logo-collision'); ?></label>
+                                </th>
+                                <td>
+                                    <fieldset>
+                                        <label>
+                                            <input 
+                                                type="radio" 
+                                                name="caa_pro_filter_mode" 
+                                                value="include" 
+                                                <?php checked($filter_mode, 'include'); ?>
+                                            />
+                                            <strong><?php esc_html_e('Include Mode', 'logo-collision'); ?></strong>
+                                            <span class="description"><?php esc_html_e(' - Run plugin only on selected pages/post types/items', 'logo-collision'); ?></span>
+                                        </label>
+                                        <br>
+                                        <label>
+                                            <input 
+                                                type="radio" 
+                                                name="caa_pro_filter_mode" 
+                                                value="exclude" 
+                                                <?php checked($filter_mode, 'exclude'); ?>
+                                            />
+                                            <strong><?php esc_html_e('Exclude Mode', 'logo-collision'); ?></strong>
+                                            <span class="description"><?php esc_html_e(' - Run plugin everywhere except selected pages/post types/items', 'logo-collision'); ?></span>
+                                        </label>
+                                    </fieldset>
+                                </td>
+                            </tr>
+                            
+                            <tr>
+                                <th scope="row">
+                                    <label id="caa-post-types-label"><?php esc_html_e('Post Types', 'logo-collision'); ?></label>
+                                </th>
+                                <td>
+                                    <fieldset style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;">
+                                        <?php foreach ($all_post_types as $post_type => $post_type_obj) : ?>
+                                            <label style="display: block; margin-bottom: 8px;">
+                                                <input 
+                                                    type="checkbox" 
+                                                    name="caa_pro_post_types[]" 
+                                                    value="<?php echo esc_attr($post_type); ?>"
+                                                    <?php checked(in_array($post_type, $selected_post_types, true)); ?>
+                                                />
+                                                <?php echo esc_html($post_type_obj->label); ?> (<code><?php echo esc_html($post_type); ?></code>)
+                                            </label>
+                                        <?php endforeach; ?>
+                                    </fieldset>
+                                    <p class="description" id="caa-post-types-desc">
+                                        <?php esc_html_e('Select post types to include.', 'logo-collision'); ?>
+                                    </p>
+                                </td>
+                            </tr>
+                            
+                            <tr>
+                                <th scope="row">
+                                    <label id="caa-pages-label"><?php esc_html_e('Pages', 'logo-collision'); ?></label>
+                                </th>
+                                <td>
+                                    <label>
+                                        <input 
+                                            type="checkbox" 
+                                            name="caa_pro_include_pages" 
+                                            value="1"
+                                            <?php checked($include_pages, '1'); ?>
+                                        />
+                                        <span id="caa-pages-text"><?php esc_html_e('Include all pages', 'logo-collision'); ?></span>
+                                    </label>
+                                </td>
+                            </tr>
+                            
+                            <tr>
+                                <th scope="row">
+                                    <label id="caa-posts-label"><?php esc_html_e('Posts', 'logo-collision'); ?></label>
+                                </th>
+                                <td>
+                                    <label>
+                                        <input 
+                                            type="checkbox" 
+                                            name="caa_pro_include_posts" 
+                                            value="1"
+                                            <?php checked($include_posts, '1'); ?>
+                                        />
+                                        <span id="caa-posts-text"><?php esc_html_e('Include all posts', 'logo-collision'); ?></span>
+                                    </label>
+                                </td>
+                            </tr>
+                            
+                            <tr>
+                                <th scope="row">
+                                    <label id="caa-items-label"><?php esc_html_e('Individual Items', 'logo-collision'); ?></label>
+                                </th>
+                                <td>
+                                    <div id="caa-items-autocomplete-container">
+                                        <input 
+                                            type="text" 
+                                            id="caa-items-search" 
+                                            class="regular-text"
+                                            placeholder="<?php esc_attr_e('Search for posts or pages...', 'logo-collision'); ?>"
+                                        />
+                                    </div>
+                                    <div id="caa-selected-items" style="margin-top: 10px;">
+                                        <?php
+                                        if (!empty($selected_items)) {
+                                            foreach ($selected_items as $item_id) {
+                                                $post = get_post($item_id);
+                                                if ($post) {
+                                                    $post_type_obj = get_post_type_object($post->post_type);
+                                                    $post_type_label = $post_type_obj ? $post_type_obj->labels->singular_name : $post->post_type;
+                                                    echo '<span class="caa-item-tag" data-id="' . esc_attr($item_id) . '">';
+                                                    echo esc_html($post->post_title) . ' (' . esc_html($post_type_label) . ' #' . esc_html($item_id) . ')';
+                                                    echo ' <span class="caa-remove-item" style="cursor: pointer; color: #d63638;">×</span>';
+                                                    echo '<input type="hidden" name="caa_pro_selected_items[]" value="' . esc_attr($item_id) . '" />';
+                                                    echo '</span> ';
+                                                }
+                                            }
+                                        }
+                                        ?>
+                                    </div>
+                                    <p class="description" id="caa-items-desc">
+                                        <?php esc_html_e('Search and select individual posts or pages to include.', 'logo-collision'); ?>
+                                    </p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <?php submit_button(__('Save Filtering Settings', 'logo-collision'), 'primary', 'caa_save_filtering'); ?>
+            </form>
+        </div><!-- End Filtering Sub-tab -->
     </div><!-- End Pro Version Tab -->
     
     <div class="caa-info-box">

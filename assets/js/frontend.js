@@ -554,15 +554,42 @@ const defaultAnimationProps = {
       };
       
       case 7: // Move Away
+      const effect7Settings = {
+        moveDistance: settings.effect7MoveDistance !== undefined && settings.effect7MoveDistance !== '' ? settings.effect7MoveDistance : null
+      };
       return {
         offsetStartAmount: effectOffsetStart,
         offsetEndAmount: effectOffsetEnd,
         onEnter: (target) => {
           if (target.currentTween) target.currentTween.kill();
           resetElement(target);
+          
+          // Calculate move distance
+          let animationProps_effect7 = { ...animationProps };
+          if (effect7Settings.moveDistance) {
+            // Parse the value (e.g., "100px" or "50%")
+            const match = effect7Settings.moveDistance.match(/^([+-]?\d+(?:\.\d+)?)(px|%)$/i);
+            if (match) {
+              const number = parseFloat(match[1]);
+              const unit = match[2].toLowerCase();
+              if (unit === 'px') {
+                // For pixels, use x property (negative to move left)
+                animationProps_effect7.x = -Math.abs(number);
+              } else if (unit === '%') {
+                // For percentage, use xPercent (relative to element width, negative to move left)
+                animationProps_effect7.xPercent = -Math.abs(number);
+              }
+            }
+            // If parsing fails, fall through to default behavior
+          }
+          
+          // If no custom distance set, use default behavior
+          if (!effect7Settings.moveDistance || !animationProps_effect7.x && !animationProps_effect7.xPercent) {
+            animationProps_effect7.x = () => -1 * (target.offsetWidth + target.offsetLeft);
+          }
+          
           target.currentTween = gsap.to(target, {
-            x: () => -1 * (target.offsetWidth + target.offsetLeft),
-            ...animationProps,
+            ...animationProps_effect7,
             onComplete: () => {
               target.currentTween = null;
             }
@@ -572,6 +599,7 @@ const defaultAnimationProps = {
           if (target.currentTween) target.currentTween.kill();
           target.currentTween = gsap.to(target, {
             x: 0,
+            xPercent: 0,
             ...animationProps,
             onComplete: () => {
               resetElement(target);
