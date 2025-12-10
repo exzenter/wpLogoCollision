@@ -256,7 +256,7 @@
                             '<div class="caa-settings-grid">' +
                                 '<div class="caa-setting-field">' +
                                     '<label>Duration</label>' +
-                                    '<input type="number" name="caa_mappings[' + index + '][settings][duration]" value="0.6" min="0.1" max="2" step="0.1" class="small-text" />' +
+                                    '<input type="number" name="caa_mappings[' + index + '][settings][duration]" value="0.6" min="0.1" max="10" step="0.1" class="small-text" />' +
                                     '<span>s</span>' +
                                 '</div>' +
                                 '<div class="caa-setting-field">' +
@@ -295,12 +295,12 @@
                                 '</div>' +
                                 '<div class="caa-setting-field">' +
                                     '<label>Origin X</label>' +
-                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect1_origin_x]" value="0" min="0" max="100" step="5" class="small-text" />' +
+                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect1_origin_x]" value="0" min="0" max="500" step="5" class="small-text" />' +
                                     '<span>%</span>' +
                                 '</div>' +
                                 '<div class="caa-setting-field">' +
                                     '<label>Origin Y</label>' +
-                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect1_origin_y]" value="50" min="0" max="100" step="5" class="small-text" />' +
+                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect1_origin_y]" value="50" min="0" max="500" step="5" class="small-text" />' +
                                     '<span>%</span>' +
                                 '</div>' +
                             '</div>' +
@@ -310,7 +310,7 @@
                             '<div class="caa-settings-grid">' +
                                 '<div class="caa-setting-field">' +
                                     '<label>Blur Amount</label>' +
-                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect2_blur_amount]" value="5" min="0" max="20" step="0.5" class="small-text" />' +
+                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect2_blur_amount]" value="5" min="0" max="100" step="0.5" class="small-text" />' +
                                     '<span>px</span>' +
                                 '</div>' +
                                 '<div class="caa-setting-field">' +
@@ -319,7 +319,7 @@
                                 '</div>' +
                                 '<div class="caa-setting-field">' +
                                     '<label>Duration</label>' +
-                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect2_blur_duration]" value="0.2" min="0.1" max="1" step="0.1" class="small-text" />' +
+                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect2_blur_duration]" value="0.2" min="0.1" max="5" step="0.1" class="small-text" />' +
                                     '<span>s</span>' +
                                 '</div>' +
                             '</div>' +
@@ -332,17 +332,17 @@
                             '<div class="caa-settings-grid">' +
                                 '<div class="caa-setting-field">' +
                                     '<label>X Range</label>' +
-                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect4_text_x_range]" value="50" min="0" max="200" step="5" class="small-text" />' +
+                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect4_text_x_range]" value="50" min="0" max="1000" step="5" class="small-text" />' +
                                     '<span>px</span>' +
                                 '</div>' +
                                 '<div class="caa-setting-field">' +
                                     '<label>Y Range</label>' +
-                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect4_text_y_range]" value="40" min="0" max="200" step="5" class="small-text" />' +
+                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect4_text_y_range]" value="40" min="0" max="1000" step="5" class="small-text" />' +
                                     '<span>px</span>' +
                                 '</div>' +
                                 '<div class="caa-setting-field">' +
                                     '<label>Stagger</label>' +
-                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect4_stagger_amount]" value="0.03" min="0" max="0.5" step="0.01" class="small-text" />' +
+                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect4_stagger_amount]" value="0.03" min="0" max="2.5" step="0.01" class="small-text" />' +
                                     '<span>s</span>' +
                                 '</div>' +
                             '</div>' +
@@ -352,16 +352,16 @@
                             '<div class="caa-settings-grid">' +
                                 '<div class="caa-setting-field">' +
                                     '<label>Iterations</label>' +
-                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect5_shuffle_iterations]" value="2" min="1" max="10" step="1" class="small-text" />' +
+                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect5_shuffle_iterations]" value="2" min="1" max="50" step="1" class="small-text" />' +
                                 '</div>' +
                                 '<div class="caa-setting-field">' +
                                     '<label>Shuffle Duration</label>' +
-                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect5_shuffle_duration]" value="0.03" min="0.01" max="0.1" step="0.01" class="small-text" />' +
+                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect5_shuffle_duration]" value="0.03" min="0.01" max="0.5" step="0.01" class="small-text" />' +
                                     '<span>s</span>' +
                                 '</div>' +
                                 '<div class="caa-setting-field">' +
                                     '<label>Char Delay</label>' +
-                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect5_char_delay]" value="0.03" min="0" max="0.2" step="0.01" class="small-text" />' +
+                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect5_char_delay]" value="0.03" min="0" max="1.0" step="0.01" class="small-text" />' +
                                     '<span>s</span>' +
                                 '</div>' +
                             '</div>' +
@@ -371,22 +371,22 @@
                             '<div class="caa-settings-grid">' +
                                 '<div class="caa-setting-field">' +
                                     '<label>Rotation</label>' +
-                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect6_rotation]" value="-90" min="-180" max="180" step="5" class="small-text" />' +
+                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect6_rotation]" value="-90" min="-180" max="900" step="5" class="small-text" />' +
                                     '<span>°</span>' +
                                 '</div>' +
                                 '<div class="caa-setting-field">' +
                                     '<label>X Percent</label>' +
-                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect6_x_percent]" value="-5" min="-50" max="50" step="1" class="small-text" />' +
+                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect6_x_percent]" value="-5" min="-50" max="250" step="1" class="small-text" />' +
                                     '<span>%</span>' +
                                 '</div>' +
                                 '<div class="caa-setting-field">' +
                                     '<label>Origin X</label>' +
-                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect6_origin_x]" value="0" min="0" max="100" step="5" class="small-text" />' +
+                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect6_origin_x]" value="0" min="0" max="500" step="5" class="small-text" />' +
                                     '<span>%</span>' +
                                 '</div>' +
                                 '<div class="caa-setting-field">' +
                                     '<label>Origin Y</label>' +
-                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect6_origin_y]" value="100" min="0" max="100" step="5" class="small-text" />' +
+                                    '<input type="number" name="caa_mappings[' + index + '][settings][effect6_origin_y]" value="100" min="0" max="500" step="5" class="small-text" />' +
                                     '<span>%</span>' +
                                 '</div>' +
                             '</div>' +

@@ -558,7 +558,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                         value="<?php echo esc_attr($duration); ?>" 
                                         class="small-text"
                                         min="0.1"
-                                        max="2"
+                                        max="10"
                                         step="0.1"
                                     />
                                     <span>s</span>
@@ -688,7 +688,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                                         value="<?php echo esc_attr($effect1_origin_x); ?>" 
                                                         class="small-text"
                                                         min="0"
-                                                        max="100"
+                                                        max="500"
                                                         step="5"
                                                     />
                                                     <span>%</span>
@@ -709,7 +709,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                                         value="<?php echo esc_attr($effect1_origin_y); ?>" 
                                                         class="small-text"
                                                         min="0"
-                                                        max="100"
+                                                        max="500"
                                                         step="5"
                                                     />
                                                     <span>%</span>
@@ -750,7 +750,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                                         value="<?php echo esc_attr($effect2_blur_amount); ?>" 
                                                         class="small-text"
                                                         min="0"
-                                                        max="20"
+                                                        max="100"
                                                         step="0.5"
                                                     />
                                                     <span>px</span>
@@ -791,7 +791,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                                         value="<?php echo esc_attr($effect2_blur_duration); ?>" 
                                                         class="small-text"
                                                         min="0.1"
-                                                        max="1"
+                                                        max="5"
                                                         step="0.1"
                                                     />
                                                     <span>s</span>
@@ -853,7 +853,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                                         value="<?php echo esc_attr($effect4_text_x_range); ?>" 
                                                         class="small-text"
                                                         min="0"
-                                                        max="200"
+                                                        max="1000"
                                                         step="5"
                                                     />
                                                     <span>px</span>
@@ -874,7 +874,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                                         value="<?php echo esc_attr($effect4_text_y_range); ?>" 
                                                         class="small-text"
                                                         min="0"
-                                                        max="200"
+                                                        max="1000"
                                                         step="5"
                                                     />
                                                     <span>px</span>
@@ -895,7 +895,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                                         value="<?php echo esc_attr($effect4_stagger_amount); ?>" 
                                                         class="small-text"
                                                         min="0"
-                                                        max="0.5"
+                                                        max="2.5"
                                                         step="0.01"
                                                     />
                                                     <span>s</span>
@@ -936,7 +936,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                                         value="<?php echo esc_attr($effect5_shuffle_iterations); ?>" 
                                                         class="small-text"
                                                         min="1"
-                                                        max="10"
+                                                        max="50"
                                                         step="1"
                                                     />
                                                     <p class="description">
@@ -956,7 +956,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                                         value="<?php echo esc_attr($effect5_shuffle_duration); ?>" 
                                                         class="small-text"
                                                         min="0.01"
-                                                        max="0.1"
+                                                        max="0.5"
                                                         step="0.01"
                                                     />
                                                     <span>s</span>
@@ -977,7 +977,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                                         value="<?php echo esc_attr($effect5_char_delay); ?>" 
                                                         class="small-text"
                                                         min="0"
-                                                        max="0.2"
+                                                        max="1.0"
                                                         step="0.01"
                                                     />
                                                     <span>s</span>
@@ -1018,7 +1018,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                                         value="<?php echo esc_attr($effect6_rotation); ?>" 
                                                         class="small-text"
                                                         min="-180"
-                                                        max="180"
+                                                        max="900"
                                                         step="5"
                                                     />
                                                     <span>°</span>
@@ -1039,7 +1039,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                                         value="<?php echo esc_attr($effect6_x_percent); ?>" 
                                                         class="small-text"
                                                         min="-50"
-                                                        max="50"
+                                                        max="250"
                                                         step="1"
                                                     />
                                                     <span>%</span>
@@ -1060,7 +1060,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                                         value="<?php echo esc_attr($effect6_origin_x); ?>" 
                                                         class="small-text"
                                                         min="0"
-                                                        max="100"
+                                                        max="500"
                                                         step="5"
                                                     />
                                                     <span>%</span>
@@ -1081,7 +1081,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                                         value="<?php echo esc_attr($effect6_origin_y); ?>" 
                                                         class="small-text"
                                                         min="0"
-                                                        max="100"
+                                                        max="500"
                                                         step="5"
                                                     />
                                                     <span>%</span>
@@ -1223,7 +1223,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                     name="caa_mobile_breakpoint" 
                                     value="<?php echo esc_attr($mobile_breakpoint); ?>"
                                     min="0"
-                                    max="2000"
+                                    max="10000"
                                     style="width: 80px;"
                                 /> px
                             </label>
@@ -1371,7 +1371,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                             <tr>
                                 <th scope="row"><label for="caa_instance_duration"><?php esc_html_e('Duration', 'logo-collision'); ?></label></th>
                                 <td>
-                                    <input type="number" id="caa_instance_duration" name="caa_instance_duration" value="<?php echo esc_attr($editing_instance['duration']); ?>" min="0.1" max="3" step="0.1" class="small-text" /> s
+                                    <input type="number" id="caa_instance_duration" name="caa_instance_duration" value="<?php echo esc_attr($editing_instance['duration']); ?>" min="0.1" max="15" step="0.1" class="small-text" /> s
                                 </td>
                             </tr>
                             <tr>
@@ -1420,8 +1420,8 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                 <tr>
                                     <th scope="row"><label><?php esc_html_e('Transform Origin', 'logo-collision'); ?></label></th>
                                     <td>
-                                        X: <input type="number" name="caa_instance_effect1_origin_x" value="<?php echo esc_attr($editing_instance['effect1_origin_x']); ?>" min="0" max="100" step="5" class="small-text" />%
-                                        Y: <input type="number" name="caa_instance_effect1_origin_y" value="<?php echo esc_attr($editing_instance['effect1_origin_y']); ?>" min="0" max="100" step="5" class="small-text" />%
+                                        X: <input type="number" name="caa_instance_effect1_origin_x" value="<?php echo esc_attr($editing_instance['effect1_origin_x']); ?>" min="0" max="500" step="5" class="small-text" />%
+                                        Y: <input type="number" name="caa_instance_effect1_origin_y" value="<?php echo esc_attr($editing_instance['effect1_origin_y']); ?>" min="0" max="500" step="5" class="small-text" />%
                                     </td>
                                 </tr>
                             </tbody>
@@ -1434,7 +1434,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                             <tbody>
                                 <tr>
                                     <th scope="row"><label><?php esc_html_e('Blur Amount', 'logo-collision'); ?></label></th>
-                                    <td><input type="number" name="caa_instance_effect2_blur_amount" value="<?php echo esc_attr($editing_instance['effect2_blur_amount']); ?>" min="0" max="20" step="0.5" class="small-text" /> px</td>
+                                    <td><input type="number" name="caa_instance_effect2_blur_amount" value="<?php echo esc_attr($editing_instance['effect2_blur_amount']); ?>" min="0" max="100" step="0.5" class="small-text" /> px</td>
                                 </tr>
                                 <tr>
                                     <th scope="row"><label><?php esc_html_e('Blur Scale', 'logo-collision'); ?></label></th>
@@ -1442,7 +1442,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                 </tr>
                                 <tr>
                                     <th scope="row"><label><?php esc_html_e('Blur Duration', 'logo-collision'); ?></label></th>
-                                    <td><input type="number" name="caa_instance_effect2_blur_duration" value="<?php echo esc_attr($editing_instance['effect2_blur_duration']); ?>" min="0.1" max="1" step="0.1" class="small-text" /> s</td>
+                                    <td><input type="number" name="caa_instance_effect2_blur_duration" value="<?php echo esc_attr($editing_instance['effect2_blur_duration']); ?>" min="0.1" max="5" step="0.1" class="small-text" /> s</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1459,15 +1459,15 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                             <tbody>
                                 <tr>
                                     <th scope="row"><label><?php esc_html_e('X Range', 'logo-collision'); ?></label></th>
-                                    <td><input type="number" name="caa_instance_effect4_text_x_range" value="<?php echo esc_attr($editing_instance['effect4_text_x_range']); ?>" min="0" max="200" step="5" class="small-text" /> px</td>
+                                    <td><input type="number" name="caa_instance_effect4_text_x_range" value="<?php echo esc_attr($editing_instance['effect4_text_x_range']); ?>" min="0" max="1000" step="5" class="small-text" /> px</td>
                                 </tr>
                                 <tr>
                                     <th scope="row"><label><?php esc_html_e('Y Range', 'logo-collision'); ?></label></th>
-                                    <td><input type="number" name="caa_instance_effect4_text_y_range" value="<?php echo esc_attr($editing_instance['effect4_text_y_range']); ?>" min="0" max="200" step="5" class="small-text" /> px</td>
+                                    <td><input type="number" name="caa_instance_effect4_text_y_range" value="<?php echo esc_attr($editing_instance['effect4_text_y_range']); ?>" min="0" max="1000" step="5" class="small-text" /> px</td>
                                 </tr>
                                 <tr>
                                     <th scope="row"><label><?php esc_html_e('Stagger', 'logo-collision'); ?></label></th>
-                                    <td><input type="number" name="caa_instance_effect4_stagger_amount" value="<?php echo esc_attr($editing_instance['effect4_stagger_amount']); ?>" min="0" max="0.5" step="0.01" class="small-text" /> s</td>
+                                    <td><input type="number" name="caa_instance_effect4_stagger_amount" value="<?php echo esc_attr($editing_instance['effect4_stagger_amount']); ?>" min="0" max="2.5" step="0.01" class="small-text" /> s</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1479,15 +1479,15 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                             <tbody>
                                 <tr>
                                     <th scope="row"><label><?php esc_html_e('Iterations', 'logo-collision'); ?></label></th>
-                                    <td><input type="number" name="caa_instance_effect5_shuffle_iterations" value="<?php echo esc_attr($editing_instance['effect5_shuffle_iterations']); ?>" min="1" max="10" step="1" class="small-text" /></td>
+                                    <td><input type="number" name="caa_instance_effect5_shuffle_iterations" value="<?php echo esc_attr($editing_instance['effect5_shuffle_iterations']); ?>" min="1" max="50" step="1" class="small-text" /></td>
                                 </tr>
                                 <tr>
                                     <th scope="row"><label><?php esc_html_e('Shuffle Duration', 'logo-collision'); ?></label></th>
-                                    <td><input type="number" name="caa_instance_effect5_shuffle_duration" value="<?php echo esc_attr($editing_instance['effect5_shuffle_duration']); ?>" min="0.01" max="0.1" step="0.01" class="small-text" /> s</td>
+                                    <td><input type="number" name="caa_instance_effect5_shuffle_duration" value="<?php echo esc_attr($editing_instance['effect5_shuffle_duration']); ?>" min="0.01" max="0.5" step="0.01" class="small-text" /> s</td>
                                 </tr>
                                 <tr>
                                     <th scope="row"><label><?php esc_html_e('Char Delay', 'logo-collision'); ?></label></th>
-                                    <td><input type="number" name="caa_instance_effect5_char_delay" value="<?php echo esc_attr($editing_instance['effect5_char_delay']); ?>" min="0" max="0.2" step="0.01" class="small-text" /> s</td>
+                                    <td><input type="number" name="caa_instance_effect5_char_delay" value="<?php echo esc_attr($editing_instance['effect5_char_delay']); ?>" min="0" max="1.0" step="0.01" class="small-text" /> s</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1499,17 +1499,17 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                             <tbody>
                                 <tr>
                                     <th scope="row"><label><?php esc_html_e('Rotation', 'logo-collision'); ?></label></th>
-                                    <td><input type="number" name="caa_instance_effect6_rotation" value="<?php echo esc_attr($editing_instance['effect6_rotation']); ?>" min="-180" max="180" step="5" class="small-text" /> &deg;</td>
+                                    <td><input type="number" name="caa_instance_effect6_rotation" value="<?php echo esc_attr($editing_instance['effect6_rotation']); ?>" min="-180" max="900" step="5" class="small-text" /> &deg;</td>
                                 </tr>
                                 <tr>
                                     <th scope="row"><label><?php esc_html_e('X Percent', 'logo-collision'); ?></label></th>
-                                    <td><input type="number" name="caa_instance_effect6_x_percent" value="<?php echo esc_attr($editing_instance['effect6_x_percent']); ?>" min="-50" max="50" step="1" class="small-text" /> %</td>
+                                    <td><input type="number" name="caa_instance_effect6_x_percent" value="<?php echo esc_attr($editing_instance['effect6_x_percent']); ?>" min="-50" max="250" step="1" class="small-text" /> %</td>
                                 </tr>
                                 <tr>
                                     <th scope="row"><label><?php esc_html_e('Transform Origin', 'logo-collision'); ?></label></th>
                                     <td>
-                                        X: <input type="number" name="caa_instance_effect6_origin_x" value="<?php echo esc_attr($editing_instance['effect6_origin_x']); ?>" min="0" max="100" step="5" class="small-text" />%
-                                        Y: <input type="number" name="caa_instance_effect6_origin_y" value="<?php echo esc_attr($editing_instance['effect6_origin_y']); ?>" min="0" max="100" step="5" class="small-text" />%
+                                        X: <input type="number" name="caa_instance_effect6_origin_x" value="<?php echo esc_attr($editing_instance['effect6_origin_x']); ?>" min="0" max="500" step="5" class="small-text" />%
+                                        Y: <input type="number" name="caa_instance_effect6_origin_y" value="<?php echo esc_attr($editing_instance['effect6_origin_y']); ?>" min="0" max="500" step="5" class="small-text" />%
                                     </td>
                                 </tr>
                             </tbody>
@@ -1793,7 +1793,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                         <div class="caa-settings-grid">
                                             <div class="caa-setting-field">
                                                 <label><?php esc_html_e('Duration', 'logo-collision'); ?></label>
-                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][duration]" value="<?php echo esc_attr($s_duration); ?>" min="0.1" max="2" step="0.1" class="small-text" />
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][duration]" value="<?php echo esc_attr($s_duration); ?>" min="0.1" max="10" step="0.1" class="small-text" />
                                                 <span>s</span>
                                             </div>
                                             <div class="caa-setting-field">
@@ -1834,12 +1834,12 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                             </div>
                                             <div class="caa-setting-field">
                                                 <label><?php esc_html_e('Origin X', 'logo-collision'); ?></label>
-                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect1_origin_x]" value="<?php echo esc_attr($s_effect1_origin_x); ?>" min="0" max="100" step="5" class="small-text" />
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect1_origin_x]" value="<?php echo esc_attr($s_effect1_origin_x); ?>" min="0" max="500" step="5" class="small-text" />
                                                 <span>%</span>
                                             </div>
                                             <div class="caa-setting-field">
                                                 <label><?php esc_html_e('Origin Y', 'logo-collision'); ?></label>
-                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect1_origin_y]" value="<?php echo esc_attr($s_effect1_origin_y); ?>" min="0" max="100" step="5" class="small-text" />
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect1_origin_y]" value="<?php echo esc_attr($s_effect1_origin_y); ?>" min="0" max="500" step="5" class="small-text" />
                                                 <span>%</span>
                                             </div>
                                         </div>
@@ -1851,7 +1851,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                         <div class="caa-settings-grid">
                                             <div class="caa-setting-field">
                                                 <label><?php esc_html_e('Blur Amount', 'logo-collision'); ?></label>
-                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect2_blur_amount]" value="<?php echo esc_attr($s_effect2_blur_amount); ?>" min="0" max="20" step="0.5" class="small-text" />
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect2_blur_amount]" value="<?php echo esc_attr($s_effect2_blur_amount); ?>" min="0" max="100" step="0.5" class="small-text" />
                                                 <span>px</span>
                                             </div>
                                             <div class="caa-setting-field">
@@ -1860,7 +1860,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                             </div>
                                             <div class="caa-setting-field">
                                                 <label><?php esc_html_e('Duration', 'logo-collision'); ?></label>
-                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect2_blur_duration]" value="<?php echo esc_attr($s_effect2_blur_duration); ?>" min="0.1" max="1" step="0.1" class="small-text" />
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect2_blur_duration]" value="<?php echo esc_attr($s_effect2_blur_duration); ?>" min="0.1" max="5" step="0.1" class="small-text" />
                                                 <span>s</span>
                                             </div>
                                         </div>
@@ -1877,17 +1877,17 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                         <div class="caa-settings-grid">
                                             <div class="caa-setting-field">
                                                 <label><?php esc_html_e('X Range', 'logo-collision'); ?></label>
-                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect4_text_x_range]" value="<?php echo esc_attr($s_effect4_text_x_range); ?>" min="0" max="200" step="5" class="small-text" />
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect4_text_x_range]" value="<?php echo esc_attr($s_effect4_text_x_range); ?>" min="0" max="1000" step="5" class="small-text" />
                                                 <span>px</span>
                                             </div>
                                             <div class="caa-setting-field">
                                                 <label><?php esc_html_e('Y Range', 'logo-collision'); ?></label>
-                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect4_text_y_range]" value="<?php echo esc_attr($s_effect4_text_y_range); ?>" min="0" max="200" step="5" class="small-text" />
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect4_text_y_range]" value="<?php echo esc_attr($s_effect4_text_y_range); ?>" min="0" max="1000" step="5" class="small-text" />
                                                 <span>px</span>
                                             </div>
                                             <div class="caa-setting-field">
                                                 <label><?php esc_html_e('Stagger', 'logo-collision'); ?></label>
-                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect4_stagger_amount]" value="<?php echo esc_attr($s_effect4_stagger_amount); ?>" min="0" max="0.5" step="0.01" class="small-text" />
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect4_stagger_amount]" value="<?php echo esc_attr($s_effect4_stagger_amount); ?>" min="0" max="2.5" step="0.01" class="small-text" />
                                                 <span>s</span>
                                             </div>
                                         </div>
@@ -1899,16 +1899,16 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                         <div class="caa-settings-grid">
                                             <div class="caa-setting-field">
                                                 <label><?php esc_html_e('Iterations', 'logo-collision'); ?></label>
-                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect5_shuffle_iterations]" value="<?php echo esc_attr($s_effect5_shuffle_iterations); ?>" min="1" max="10" step="1" class="small-text" />
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect5_shuffle_iterations]" value="<?php echo esc_attr($s_effect5_shuffle_iterations); ?>" min="1" max="50" step="1" class="small-text" />
                                             </div>
                                             <div class="caa-setting-field">
                                                 <label><?php esc_html_e('Shuffle Duration', 'logo-collision'); ?></label>
-                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect5_shuffle_duration]" value="<?php echo esc_attr($s_effect5_shuffle_duration); ?>" min="0.01" max="0.1" step="0.01" class="small-text" />
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect5_shuffle_duration]" value="<?php echo esc_attr($s_effect5_shuffle_duration); ?>" min="0.01" max="0.5" step="0.01" class="small-text" />
                                                 <span>s</span>
                                             </div>
                                             <div class="caa-setting-field">
                                                 <label><?php esc_html_e('Char Delay', 'logo-collision'); ?></label>
-                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect5_char_delay]" value="<?php echo esc_attr($s_effect5_char_delay); ?>" min="0" max="0.2" step="0.01" class="small-text" />
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect5_char_delay]" value="<?php echo esc_attr($s_effect5_char_delay); ?>" min="0" max="1.0" step="0.01" class="small-text" />
                                                 <span>s</span>
                                             </div>
                                         </div>
@@ -1920,22 +1920,22 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                                         <div class="caa-settings-grid">
                                             <div class="caa-setting-field">
                                                 <label><?php esc_html_e('Rotation', 'logo-collision'); ?></label>
-                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect6_rotation]" value="<?php echo esc_attr($s_effect6_rotation); ?>" min="-180" max="180" step="5" class="small-text" />
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect6_rotation]" value="<?php echo esc_attr($s_effect6_rotation); ?>" min="-180" max="900" step="5" class="small-text" />
                                                 <span>°</span>
                                             </div>
                                             <div class="caa-setting-field">
                                                 <label><?php esc_html_e('X Percent', 'logo-collision'); ?></label>
-                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect6_x_percent]" value="<?php echo esc_attr($s_effect6_x_percent); ?>" min="-50" max="50" step="1" class="small-text" />
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect6_x_percent]" value="<?php echo esc_attr($s_effect6_x_percent); ?>" min="-50" max="250" step="1" class="small-text" />
                                                 <span>%</span>
                                             </div>
                                             <div class="caa-setting-field">
                                                 <label><?php esc_html_e('Origin X', 'logo-collision'); ?></label>
-                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect6_origin_x]" value="<?php echo esc_attr($s_effect6_origin_x); ?>" min="0" max="100" step="5" class="small-text" />
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect6_origin_x]" value="<?php echo esc_attr($s_effect6_origin_x); ?>" min="0" max="500" step="5" class="small-text" />
                                                 <span>%</span>
                                             </div>
                                             <div class="caa-setting-field">
                                                 <label><?php esc_html_e('Origin Y', 'logo-collision'); ?></label>
-                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect6_origin_y]" value="<?php echo esc_attr($s_effect6_origin_y); ?>" min="0" max="100" step="5" class="small-text" />
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect6_origin_y]" value="<?php echo esc_attr($s_effect6_origin_y); ?>" min="0" max="500" step="5" class="small-text" />
                                                 <span>%</span>
                                             </div>
                                         </div>

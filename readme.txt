@@ -31,6 +31,12 @@ Context-Aware Animation is a WordPress plugin that automatically detects when yo
 * Easy configuration through WordPress admin settings
 * Powered by GSAP (GreenSock Animation Platform) for smooth, performant animations
 
+**Pro Features:**
+
+* Multiple Instances - Create up to 10 instances to animate different elements with separate settings. Each instance can have its own logo selector, effect, animation settings, and page filtering rules. [Pro Feature]
+* Element Effect Mappings - Map specific elements to different effects. When the logo collides with these elements, the mapped effect will be used instead of the global default. Perfect for applying different effects to different sections of your page (e.g., scale for hero section, blur for portfolio, rotation for testimonials). [Pro Feature]
+* Page Filtering - Control where the plugin runs with advanced filtering options. Include or exclude specific post types, all pages, all posts, or individual items. Choose between include mode (run only on selected pages) or exclude mode (run everywhere except selected pages). [Pro Feature]
+
 == Installation ==
 
 1. Upload the `logo-collision` folder to the `/wp-content/plugins/` directory
