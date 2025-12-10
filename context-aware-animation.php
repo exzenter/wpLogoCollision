@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: Context-Aware Animation
- * Plugin URI: https://example.com/context-aware-animation
+ * Plugin URI: https://wordpress.org/plugins/context-aware-animation/
  * Description: Apply context-aware scroll animations to your WordPress header logo when it would collide with scrolling content.
  * Version: 1.0.0
- * Author: Your Name
- * Author URI: https://example.com
+ * Author: wpmitch
+ * Author URI: https://profiles.wordpress.org/wpmitch/
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: context-aware-animation
@@ -52,6 +52,9 @@ class Context_Aware_Animation {
      * Initialize hooks
      */
     private function init_hooks() {
+        // Load text domain for translations
+        add_action('init', array($this, 'load_textdomain'));
+        
         // Admin hooks
         add_action('admin_menu', array($this, 'add_settings_page'));
         add_action('admin_init', array($this, 'register_settings'));
@@ -59,6 +62,17 @@ class Context_Aware_Animation {
         // Frontend hooks
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
         add_filter('script_loader_tag', array($this, 'add_module_type'), 10, 3);
+    }
+    
+    /**
+     * Load plugin text domain for translations
+     */
+    public function load_textdomain() {
+        load_plugin_textdomain(
+            'context-aware-animation',
+            false,
+            dirname(plugin_basename(__FILE__)) . '/languages'
+        );
     }
     
     /**
@@ -350,10 +364,10 @@ class Context_Aware_Animation {
         // Check if text splitting is needed (effects 4 and 5)
         $needs_text_splitting = in_array($selected_effect, array('4', '5'));
         
-        // Enqueue GSAP from CDN
+        // Enqueue GSAP from local assets
         wp_enqueue_script(
             'gsap',
-            'https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js',
+            CAA_PLUGIN_URL . 'assets/js/gsap.min.js',
             array(),
             '3.12.5',
             true
@@ -361,7 +375,7 @@ class Context_Aware_Animation {
         
         wp_enqueue_script(
             'gsap-scrolltrigger',
-            'https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js',
+            CAA_PLUGIN_URL . 'assets/js/ScrollTrigger.min.js',
             array('gsap'),
             '3.12.5',
             true
@@ -421,47 +435,48 @@ class Context_Aware_Animation {
         );
         
         // Build settings array with only selected effect's settings
+        // Note: wp_localize_script() handles escaping automatically - do not use esc_js()
         $settings_array = array(
-            'logoId' => esc_js($logo_id),
-            'selectedEffect' => esc_js($selected_effect),
-            'includedElements' => esc_js($included_elements),
-            'excludedElements' => esc_js($excluded_elements),
-            'globalOffset' => esc_js($global_offset),
-            'debugMode' => esc_js($debug_mode),
+            'logoId' => $logo_id,
+            'selectedEffect' => $selected_effect,
+            'includedElements' => $included_elements,
+            'excludedElements' => $excluded_elements,
+            'globalOffset' => $global_offset,
+            'debugMode' => $debug_mode,
             // Global animation settings
-            'duration' => esc_js($duration),
-            'ease' => esc_js($ease),
-            'offsetStart' => esc_js($offset_start),
-            'offsetEnd' => esc_js($offset_end)
+            'duration' => $duration,
+            'ease' => $ease,
+            'offsetStart' => $offset_start,
+            'offsetEnd' => $offset_end
         );
         
         // Only add settings for the selected effect
         switch ($selected_effect) {
             case '1':
-                $settings_array['effect1ScaleDown'] = esc_js(get_option('caa_effect1_scale_down', '0'));
-                $settings_array['effect1OriginX'] = esc_js(get_option('caa_effect1_origin_x', '0'));
-                $settings_array['effect1OriginY'] = esc_js(get_option('caa_effect1_origin_y', '50'));
+                $settings_array['effect1ScaleDown'] = get_option('caa_effect1_scale_down', '0');
+                $settings_array['effect1OriginX'] = get_option('caa_effect1_origin_x', '0');
+                $settings_array['effect1OriginY'] = get_option('caa_effect1_origin_y', '50');
                 break;
             case '2':
-                $settings_array['effect2BlurAmount'] = esc_js(get_option('caa_effect2_blur_amount', '5'));
-                $settings_array['effect2BlurScale'] = esc_js(get_option('caa_effect2_blur_scale', '0.9'));
-                $settings_array['effect2BlurDuration'] = esc_js(get_option('caa_effect2_blur_duration', '0.2'));
+                $settings_array['effect2BlurAmount'] = get_option('caa_effect2_blur_amount', '5');
+                $settings_array['effect2BlurScale'] = get_option('caa_effect2_blur_scale', '0.9');
+                $settings_array['effect2BlurDuration'] = get_option('caa_effect2_blur_duration', '0.2');
                 break;
             case '4':
-                $settings_array['effect4TextXRange'] = esc_js(get_option('caa_effect4_text_x_range', '50'));
-                $settings_array['effect4TextYRange'] = esc_js(get_option('caa_effect4_text_y_range', '40'));
-                $settings_array['effect4StaggerAmount'] = esc_js(get_option('caa_effect4_stagger_amount', '0.03'));
+                $settings_array['effect4TextXRange'] = get_option('caa_effect4_text_x_range', '50');
+                $settings_array['effect4TextYRange'] = get_option('caa_effect4_text_y_range', '40');
+                $settings_array['effect4StaggerAmount'] = get_option('caa_effect4_stagger_amount', '0.03');
                 break;
             case '5':
-                $settings_array['effect5ShuffleIterations'] = esc_js(get_option('caa_effect5_shuffle_iterations', '2'));
-                $settings_array['effect5ShuffleDuration'] = esc_js(get_option('caa_effect5_shuffle_duration', '0.03'));
-                $settings_array['effect5CharDelay'] = esc_js(get_option('caa_effect5_char_delay', '0.03'));
+                $settings_array['effect5ShuffleIterations'] = get_option('caa_effect5_shuffle_iterations', '2');
+                $settings_array['effect5ShuffleDuration'] = get_option('caa_effect5_shuffle_duration', '0.03');
+                $settings_array['effect5CharDelay'] = get_option('caa_effect5_char_delay', '0.03');
                 break;
             case '6':
-                $settings_array['effect6Rotation'] = esc_js(get_option('caa_effect6_rotation', '-90'));
-                $settings_array['effect6XPercent'] = esc_js(get_option('caa_effect6_x_percent', '-5'));
-                $settings_array['effect6OriginX'] = esc_js(get_option('caa_effect6_origin_x', '0'));
-                $settings_array['effect6OriginY'] = esc_js(get_option('caa_effect6_origin_y', '100'));
+                $settings_array['effect6Rotation'] = get_option('caa_effect6_rotation', '-90');
+                $settings_array['effect6XPercent'] = get_option('caa_effect6_x_percent', '-5');
+                $settings_array['effect6OriginX'] = get_option('caa_effect6_origin_x', '0');
+                $settings_array['effect6OriginY'] = get_option('caa_effect6_origin_y', '100');
                 break;
             // Effects 3 and 7 don't need additional settings
         }

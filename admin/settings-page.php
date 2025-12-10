@@ -13,46 +13,86 @@ if (!current_user_can('manage_options')) {
     return;
 }
 
+/**
+ * Custom sanitization functions (matching those in main plugin file)
+ */
+function caa_sanitize_effect($value) {
+    $valid_effects = array('1', '2', '3', '4', '5', '6', '7');
+    return in_array($value, $valid_effects, true) ? $value : '1';
+}
+
+function caa_sanitize_offset($value) {
+    $value = trim($value);
+    if ($value === '' || $value === null) {
+        return '0';
+    }
+    return (string) intval($value);
+}
+
+function caa_sanitize_float($value) {
+    $value = trim($value);
+    if ($value === '' || $value === null) {
+        return '0';
+    }
+    return (string) floatval($value);
+}
+
+function caa_sanitize_percent($value) {
+    $value = trim($value);
+    if ($value === '' || $value === null) {
+        return '0';
+    }
+    $int_value = intval($value);
+    $int_value = max(0, min(100, $int_value));
+    return (string) $int_value;
+}
+
+function caa_sanitize_ease($value) {
+    $valid_eases = array('power1', 'power2', 'power3', 'power4', 'expo', 'sine', 'back', 'elastic', 'bounce', 'none');
+    return in_array($value, $valid_eases, true) ? $value : 'power4';
+}
+
 // Handle form submission
 if (isset($_POST['submit']) && check_admin_referer('caa_settings_nonce')) {
-    update_option('caa_logo_id', sanitize_text_field($_POST['caa_logo_id']));
-    update_option('caa_selected_effect', sanitize_text_field($_POST['caa_selected_effect']));
-    update_option('caa_included_elements', sanitize_textarea_field($_POST['caa_included_elements']));
-    update_option('caa_excluded_elements', sanitize_textarea_field($_POST['caa_excluded_elements']));
-    update_option('caa_global_offset', sanitize_text_field($_POST['caa_global_offset']));
+    // Core settings with isset() checks and proper sanitization
+    update_option('caa_logo_id', isset($_POST['caa_logo_id']) ? sanitize_text_field(wp_unslash($_POST['caa_logo_id'])) : '');
+    update_option('caa_selected_effect', isset($_POST['caa_selected_effect']) ? caa_sanitize_effect(wp_unslash($_POST['caa_selected_effect'])) : '1');
+    update_option('caa_included_elements', isset($_POST['caa_included_elements']) ? sanitize_textarea_field(wp_unslash($_POST['caa_included_elements'])) : '');
+    update_option('caa_excluded_elements', isset($_POST['caa_excluded_elements']) ? sanitize_textarea_field(wp_unslash($_POST['caa_excluded_elements'])) : '');
+    update_option('caa_global_offset', isset($_POST['caa_global_offset']) ? caa_sanitize_offset(wp_unslash($_POST['caa_global_offset'])) : '0');
     update_option('caa_debug_mode', isset($_POST['caa_debug_mode']) ? '1' : '0');
     
     // Global animation settings
-    update_option('caa_duration', sanitize_text_field($_POST['caa_duration']));
-    update_option('caa_ease', sanitize_text_field($_POST['caa_ease']));
-    update_option('caa_offset_start', sanitize_text_field($_POST['caa_offset_start']));
-    update_option('caa_offset_end', sanitize_text_field($_POST['caa_offset_end']));
+    update_option('caa_duration', isset($_POST['caa_duration']) ? caa_sanitize_float(wp_unslash($_POST['caa_duration'])) : '0.6');
+    update_option('caa_ease', isset($_POST['caa_ease']) ? caa_sanitize_ease(wp_unslash($_POST['caa_ease'])) : 'power4');
+    update_option('caa_offset_start', isset($_POST['caa_offset_start']) ? caa_sanitize_offset(wp_unslash($_POST['caa_offset_start'])) : '30');
+    update_option('caa_offset_end', isset($_POST['caa_offset_end']) ? caa_sanitize_offset(wp_unslash($_POST['caa_offset_end'])) : '10');
     
     // Effect 1: Scale
-    update_option('caa_effect1_scale_down', sanitize_text_field($_POST['caa_effect1_scale_down']));
-    update_option('caa_effect1_origin_x', sanitize_text_field($_POST['caa_effect1_origin_x']));
-    update_option('caa_effect1_origin_y', sanitize_text_field($_POST['caa_effect1_origin_y']));
+    update_option('caa_effect1_scale_down', isset($_POST['caa_effect1_scale_down']) ? caa_sanitize_float(wp_unslash($_POST['caa_effect1_scale_down'])) : '0');
+    update_option('caa_effect1_origin_x', isset($_POST['caa_effect1_origin_x']) ? caa_sanitize_percent(wp_unslash($_POST['caa_effect1_origin_x'])) : '0');
+    update_option('caa_effect1_origin_y', isset($_POST['caa_effect1_origin_y']) ? caa_sanitize_percent(wp_unslash($_POST['caa_effect1_origin_y'])) : '50');
     
     // Effect 2: Blur
-    update_option('caa_effect2_blur_amount', sanitize_text_field($_POST['caa_effect2_blur_amount']));
-    update_option('caa_effect2_blur_scale', sanitize_text_field($_POST['caa_effect2_blur_scale']));
-    update_option('caa_effect2_blur_duration', sanitize_text_field($_POST['caa_effect2_blur_duration']));
+    update_option('caa_effect2_blur_amount', isset($_POST['caa_effect2_blur_amount']) ? caa_sanitize_float(wp_unslash($_POST['caa_effect2_blur_amount'])) : '5');
+    update_option('caa_effect2_blur_scale', isset($_POST['caa_effect2_blur_scale']) ? caa_sanitize_float(wp_unslash($_POST['caa_effect2_blur_scale'])) : '0.9');
+    update_option('caa_effect2_blur_duration', isset($_POST['caa_effect2_blur_duration']) ? caa_sanitize_float(wp_unslash($_POST['caa_effect2_blur_duration'])) : '0.2');
     
     // Effect 4: Text Split
-    update_option('caa_effect4_text_x_range', sanitize_text_field($_POST['caa_effect4_text_x_range']));
-    update_option('caa_effect4_text_y_range', sanitize_text_field($_POST['caa_effect4_text_y_range']));
-    update_option('caa_effect4_stagger_amount', sanitize_text_field($_POST['caa_effect4_stagger_amount']));
+    update_option('caa_effect4_text_x_range', isset($_POST['caa_effect4_text_x_range']) ? caa_sanitize_offset(wp_unslash($_POST['caa_effect4_text_x_range'])) : '50');
+    update_option('caa_effect4_text_y_range', isset($_POST['caa_effect4_text_y_range']) ? caa_sanitize_offset(wp_unslash($_POST['caa_effect4_text_y_range'])) : '40');
+    update_option('caa_effect4_stagger_amount', isset($_POST['caa_effect4_stagger_amount']) ? caa_sanitize_float(wp_unslash($_POST['caa_effect4_stagger_amount'])) : '0.03');
     
     // Effect 5: Character Shuffle
-    update_option('caa_effect5_shuffle_iterations', sanitize_text_field($_POST['caa_effect5_shuffle_iterations']));
-    update_option('caa_effect5_shuffle_duration', sanitize_text_field($_POST['caa_effect5_shuffle_duration']));
-    update_option('caa_effect5_char_delay', sanitize_text_field($_POST['caa_effect5_char_delay']));
+    update_option('caa_effect5_shuffle_iterations', isset($_POST['caa_effect5_shuffle_iterations']) ? caa_sanitize_offset(wp_unslash($_POST['caa_effect5_shuffle_iterations'])) : '2');
+    update_option('caa_effect5_shuffle_duration', isset($_POST['caa_effect5_shuffle_duration']) ? caa_sanitize_float(wp_unslash($_POST['caa_effect5_shuffle_duration'])) : '0.03');
+    update_option('caa_effect5_char_delay', isset($_POST['caa_effect5_char_delay']) ? caa_sanitize_float(wp_unslash($_POST['caa_effect5_char_delay'])) : '0.03');
     
     // Effect 6: Rotation
-    update_option('caa_effect6_rotation', sanitize_text_field($_POST['caa_effect6_rotation']));
-    update_option('caa_effect6_x_percent', sanitize_text_field($_POST['caa_effect6_x_percent']));
-    update_option('caa_effect6_origin_x', sanitize_text_field($_POST['caa_effect6_origin_x']));
-    update_option('caa_effect6_origin_y', sanitize_text_field($_POST['caa_effect6_origin_y']));
+    update_option('caa_effect6_rotation', isset($_POST['caa_effect6_rotation']) ? caa_sanitize_offset(wp_unslash($_POST['caa_effect6_rotation'])) : '-90');
+    update_option('caa_effect6_x_percent', isset($_POST['caa_effect6_x_percent']) ? caa_sanitize_offset(wp_unslash($_POST['caa_effect6_x_percent'])) : '-5');
+    update_option('caa_effect6_origin_x', isset($_POST['caa_effect6_origin_x']) ? caa_sanitize_percent(wp_unslash($_POST['caa_effect6_origin_x'])) : '0');
+    update_option('caa_effect6_origin_y', isset($_POST['caa_effect6_origin_y']) ? caa_sanitize_percent(wp_unslash($_POST['caa_effect6_origin_y'])) : '100');
     
     echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Settings saved.', 'context-aware-animation') . '</p></div>';
 }
