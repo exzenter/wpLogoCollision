@@ -22,7 +22,6 @@ $options_to_delete = array(
     'caa_excluded_elements',
     'caa_global_offset',
     'caa_debug_mode',
-    'caa_mobile_breakpoint',
     
     // Global animation settings
     'caa_duration',

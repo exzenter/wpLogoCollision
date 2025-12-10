@@ -18,6 +18,18 @@ const defaultAnimationProps = {
   const globalOffset = parseInt(settings.globalOffset) || 0;
   const debugMode = settings.debugMode === '1';
   
+  // Mobile disable settings
+  const disableMobile = settings.disableMobile === '1';
+  const mobileBreakpoint = parseInt(settings.mobileBreakpoint) || 768;
+  
+  // Check if effects should be disabled on mobile
+  if (disableMobile && window.innerWidth < mobileBreakpoint) {
+    if (debugMode) {
+      console.log('[CAA Debug] Effects disabled on mobile - viewport width:', window.innerWidth, '< breakpoint:', mobileBreakpoint);
+    }
+    return;
+  }
+  
   // Parse offset settings from WordPress (allow negative values)
   const offsetStart = parseInt(settings.offsetStart) || 30;
   const offsetEnd = parseInt(settings.offsetEnd) || 10;

@@ -127,10 +127,17 @@ class Context_Aware_Animation {
             'default' => '0'
         ));
         
+        // Mobile disable settings
+        register_setting('caa_settings_group', 'caa_disable_mobile', array(
+            'type' => 'string',
+            'sanitize_callback' => 'sanitize_text_field',
+            'default' => '0'
+        ));
+        
         register_setting('caa_settings_group', 'caa_mobile_breakpoint', array(
             'type' => 'string',
-            'sanitize_callback' => array($this, 'sanitize_mobile_breakpoint'),
-            'default' => '0'
+            'sanitize_callback' => 'absint',
+            'default' => '768'
         ));
         
         // Global animation settings
@@ -330,19 +337,6 @@ class Context_Aware_Animation {
         }
         // Convert to integer and back to string to ensure it's a valid number
         $int_value = intval($value);
-        return (string)$int_value;
-    }
-    
-    /**
-     * Sanitize mobile breakpoint value
-     */
-    public function sanitize_mobile_breakpoint($value) {
-        $value = trim($value);
-        if ($value === '' || $value === null) {
-            return '0';
-        }
-        // Only allow positive integers (0 means disabled)
-        $int_value = absint($value);
         return (string)$int_value;
     }
     
@@ -713,6 +707,10 @@ class Context_Aware_Animation {
             $effect_mappings[] = $js_mapping;
         }
         
+        // Get mobile disable settings
+        $disable_mobile = get_option('caa_disable_mobile', '0');
+        $mobile_breakpoint = get_option('caa_mobile_breakpoint', '768');
+        
         // Build settings array
         $settings_array = array(
             'logoId' => $logo_id,
@@ -721,6 +719,8 @@ class Context_Aware_Animation {
             'excludedElements' => $excluded_elements,
             'globalOffset' => $global_offset,
             'debugMode' => $debug_mode,
+            'disableMobile' => $disable_mobile,
+            'mobileBreakpoint' => $mobile_breakpoint,
             'duration' => $duration,
             'ease' => $ease,
             'offsetStart' => $offset_start,
@@ -821,16 +821,7 @@ class Context_Aware_Animation {
             return;
         }
         
-        // Check mobile breakpoint setting
-        $mobile_breakpoint = intval(get_option('caa_mobile_breakpoint', '0'));
-        
-        // If mobile breakpoint is set, use dynamic loader approach
-        if ($mobile_breakpoint > 0) {
-            $this->enqueue_with_viewport_check($mobile_breakpoint);
-            return;
-        }
-        
-        // Standard enqueue (no viewport check)
+        // Enqueue scripts
         $this->enqueue_scripts_standard();
     }
     
@@ -918,64 +909,6 @@ class Context_Aware_Animation {
             array(),
             CAA_VERSION
         );
-    }
-    
-    /**
-     * Enqueue scripts with viewport check - only loads files if viewport is large enough
-     * No resize listener - viewport is checked once on page load for maximum performance
-     */
-    private function enqueue_with_viewport_check($breakpoint) {
-        $needs_text_splitting = $this->needs_text_splitting();
-        $settings_array = $this->build_settings_array();
-        
-        // Build script URLs
-        $scripts = array(
-            'gsap' => CAA_PLUGIN_URL . 'assets/js/gsap.min.js',
-            'scrolltrigger' => CAA_PLUGIN_URL . 'assets/js/ScrollTrigger.min.js',
-        );
-        
-        if ($needs_text_splitting) {
-            $scripts['splittype'] = CAA_PLUGIN_URL . 'assets/js/splittype.js';
-            $scripts['utils'] = CAA_PLUGIN_URL . 'assets/js/utils.js';
-            $scripts['textsplitter'] = CAA_PLUGIN_URL . 'assets/js/textSplitter.js';
-        }
-        
-        $scripts['frontend'] = CAA_PLUGIN_URL . 'assets/js/frontend.js';
-        
-        // CSS URL
-        $css_url = CAA_PLUGIN_URL . 'assets/css/frontend.css';
-        
-        // Output inline loader script
-        add_action('wp_head', function() use ($breakpoint, $scripts, $css_url, $settings_array, $needs_text_splitting) {
-            $scripts_json = wp_json_encode($scripts);
-            $settings_json = wp_json_encode($settings_array);
-            $needs_text_splitting_js = $needs_text_splitting ? 'true' : 'false';
-            
-            // Minified loader script - checks viewport once, no resize listener
-            echo '<script id="caa-viewport-loader">';
-            echo '(function(){';
-            echo 'if(window.innerWidth<' . intval($breakpoint) . ')return;';
-            echo 'var s=' . $scripts_json . ',';
-            echo 'c="' . esc_url($css_url) . '",';
-            echo 'n=' . $needs_text_splitting_js . ',';
-            echo 'l=function(u,cb,m){var e=document.createElement("script");e.src=u;if(m)e.type="module";e.onload=cb;document.head.appendChild(e);},';
-            echo 'lc=function(){var e=document.createElement("link");e.rel="stylesheet";e.href=c;document.head.appendChild(e);};';
-            echo 'window.caaSettings=' . $settings_json . ';';
-            echo 'lc();';
-            echo 'l(s.gsap,function(){';
-            echo 'l(s.scrolltrigger,function(){';
-            echo 'if(n){';
-            echo 'var st=document.createElement("script");st.src=s.splittype;document.head.appendChild(st);';
-            echo 'st.onload=function(){';
-            echo 'l(s.utils,function(){';
-            echo 'l(s.textsplitter,function(){';
-            echo 'l(s.frontend,null,true);';
-            echo '});});};';
-            echo '}else{l(s.frontend,null,true);}';
-            echo '});});';
-            echo '})();';
-            echo '</script>';
-        }, 1); // Priority 1 to run early in head
     }
 }
 

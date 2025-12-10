@@ -68,19 +68,11 @@ function caa_sanitize_ease($value) {
     return in_array($value, $valid_eases, true) ? $value : 'power4';
 }
 
-function caa_sanitize_mobile_breakpoint($value) {
-    $value = trim($value);
-    if ($value === '' || $value === null) {
-        return '0';
-    }
-    // Only allow positive integers (0 means disabled)
-    return (string) absint($value);
-}
-
 // Handle Mappings form submission
 if (isset($_POST['caa_save_mappings']) && check_admin_referer('caa_pro_mappings_nonce')) {
     $mappings = array();
     if (isset($_POST['caa_mappings']) && is_array($_POST['caa_mappings'])) {
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitization occurs for each field in the loop below
         $caa_mappings = wp_unslash($_POST['caa_mappings']);
         foreach ($caa_mappings as $mapping) {
             $selector = isset($mapping['selector']) ? sanitize_text_field($mapping['selector']) : '';
@@ -160,6 +152,7 @@ if (isset($_POST['caa_save_filtering']) && check_admin_referer('caa_pro_filterin
     $selected_post_types = array();
     if (isset($_POST['caa_pro_post_types']) && is_array($_POST['caa_pro_post_types'])) {
         $valid_post_types = array_keys(get_post_types(array('public' => true), 'names'));
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitization occurs in the loop below
         $caa_pro_post_types = wp_unslash($_POST['caa_pro_post_types']);
         foreach ($caa_pro_post_types as $post_type) {
             $post_type = sanitize_text_field($post_type);
@@ -176,6 +169,7 @@ if (isset($_POST['caa_save_filtering']) && check_admin_referer('caa_pro_filterin
     // Handle selected items
     $selected_items = array();
     if (isset($_POST['caa_pro_selected_items']) && is_array($_POST['caa_pro_selected_items'])) {
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitization occurs in the loop below via absint()
         $caa_pro_selected_items = wp_unslash($_POST['caa_pro_selected_items']);
         foreach ($caa_pro_selected_items as $item_id) {
             $item_id = absint($item_id);
@@ -198,7 +192,10 @@ if (isset($_POST['caa_save_settings']) && check_admin_referer('caa_settings_nonc
     update_option('caa_excluded_elements', isset($_POST['caa_excluded_elements']) ? sanitize_textarea_field(wp_unslash($_POST['caa_excluded_elements'])) : '');
     update_option('caa_global_offset', isset($_POST['caa_global_offset']) ? caa_sanitize_offset(sanitize_text_field(wp_unslash($_POST['caa_global_offset']))) : '0');
     update_option('caa_debug_mode', isset($_POST['caa_debug_mode']) ? '1' : '0');
-    update_option('caa_mobile_breakpoint', isset($_POST['caa_mobile_breakpoint']) ? caa_sanitize_mobile_breakpoint(sanitize_text_field(wp_unslash($_POST['caa_mobile_breakpoint']))) : '0');
+    
+    // Mobile disable settings
+    update_option('caa_disable_mobile', isset($_POST['caa_disable_mobile']) ? '1' : '0');
+    update_option('caa_mobile_breakpoint', isset($_POST['caa_mobile_breakpoint']) ? absint(wp_unslash($_POST['caa_mobile_breakpoint'])) : '768');
     
     // Global animation settings
     update_option('caa_duration', isset($_POST['caa_duration']) ? caa_sanitize_float(sanitize_text_field(wp_unslash($_POST['caa_duration']))) : '0.6');
@@ -245,7 +242,10 @@ $included_elements = get_option('caa_included_elements', '');
 $excluded_elements = get_option('caa_excluded_elements', '');
 $global_offset = get_option('caa_global_offset', '0');
 $debug_mode = get_option('caa_debug_mode', '0');
-$mobile_breakpoint = get_option('caa_mobile_breakpoint', '0');
+
+// Get mobile disable settings
+$disable_mobile = get_option('caa_disable_mobile', '0');
+$mobile_breakpoint = get_option('caa_mobile_breakpoint', '768');
 
 // Get global animation settings
 $duration = get_option('caa_duration', '0.6');
@@ -1014,6 +1014,41 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                 
                 <tr>
                     <th scope="row">
+                        <label for="caa_disable_mobile"><?php esc_html_e('Disable on Mobile', 'logo-collision'); ?></label>
+                    </th>
+                    <td>
+                        <label>
+                            <input 
+                                type="checkbox" 
+                                id="caa_disable_mobile" 
+                                name="caa_disable_mobile" 
+                                value="1"
+                                <?php checked($disable_mobile, '1'); ?>
+                            />
+                            <?php esc_html_e('Disable effects on small screens', 'logo-collision'); ?>
+                        </label>
+                        <div class="caa-mobile-breakpoint-field" style="margin-top: 10px;">
+                            <label for="caa_mobile_breakpoint">
+                                <?php esc_html_e('Breakpoint:', 'logo-collision'); ?>
+                                <input 
+                                    type="number" 
+                                    id="caa_mobile_breakpoint" 
+                                    name="caa_mobile_breakpoint" 
+                                    value="<?php echo esc_attr($mobile_breakpoint); ?>"
+                                    min="0"
+                                    max="2000"
+                                    style="width: 80px;"
+                                /> px
+                            </label>
+                        </div>
+                        <p class="description">
+                            <?php esc_html_e('When enabled, effects will be disabled on viewports smaller than the specified breakpoint width.', 'logo-collision'); ?>
+                        </p>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <th scope="row">
                         <label for="caa_debug_mode"><?php esc_html_e('Debug Mode', 'logo-collision'); ?></label>
                     </th>
                     <td>
@@ -1033,31 +1068,6 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                     </td>
                 </tr>
                 
-                <tr>
-                    <th scope="row">
-                        <label for="caa_mobile_breakpoint"><?php esc_html_e('Disable on Small Screens', 'logo-collision'); ?></label>
-                    </th>
-                    <td>
-                        <input 
-                            type="number" 
-                            id="caa_mobile_breakpoint" 
-                            name="caa_mobile_breakpoint" 
-                            value="<?php echo esc_attr($mobile_breakpoint); ?>" 
-                            class="small-text"
-                            min="0"
-                            step="1"
-                            placeholder="0"
-                        />
-                        <span>px</span>
-                        <p class="description">
-                            <?php esc_html_e('Disable the plugin for viewports smaller than this width. Set to 0 to disable this feature.', 'logo-collision'); ?>
-                            <br>
-                            <?php esc_html_e('When enabled, no plugin files will be loaded on small screens for maximum performance. If a user resizes from small to large, the plugin will NOT activate (page reload required).', 'logo-collision'); ?>
-                            <br>
-                            <?php esc_html_e('Common breakpoints: 768px (tablets), 1024px (small laptops)', 'logo-collision'); ?>
-                        </p>
-                    </td>
-                </tr>
             </tbody>
         </table>
         
