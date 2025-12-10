@@ -226,6 +226,27 @@ const defaultAnimationProps = {
   // Remove duplicates
   contentBlocks = [...new Set(contentBlocks)];
   debug.log(`Total content blocks found: ${contentBlocks.length}`, contentBlocks);
+
+  // Add mapped elements as content blocks (mappings work independently of Include Elements)
+  if (effectMappings.length > 0) {
+    debug.log('Adding mapped elements as content blocks...');
+    effectMappings.forEach(mapping => {
+      if (!mapping.selector) return;
+      try {
+        const mappedElements = document.querySelectorAll(mapping.selector.trim());
+        mappedElements.forEach(el => {
+          if (!contentBlocks.includes(el) && el.offsetHeight > 0) {
+            contentBlocks.push(el);
+            debug.log('Added mapped element as content block:', el, mapping.selector);
+          }
+        });
+      } catch (e) {
+        debug.warn('Invalid selector in mapping:', mapping.selector, e);
+      }
+    });
+    debug.log(`Content blocks after adding mappings: ${contentBlocks.length}`, contentBlocks);
+  }
+
   debug.groupEnd();
 
   // Helper function to verify SplitType library is available
@@ -248,23 +269,48 @@ const defaultAnimationProps = {
   }
 
   // Build effect functions based on effect number (allows per-element effects)
-  function buildEffect(effectNumber = selectedEffect) {
-    // Merge WordPress settings with defaults
+  // overrideSettings is an optional object with per-mapping settings overrides
+  function buildEffect(effectNumber = selectedEffect, overrideSettings = null) {
+    // Determine the source of settings - use override if provided, otherwise global
+    const useOverride = overrideSettings !== null;
+    
+    // Merge WordPress settings with defaults, applying overrides if present
     const animationProps = {
-      duration: parseFloat(settings.duration) || defaultAnimationProps.duration,
-      ease: settings.ease || defaultAnimationProps.ease
+      duration: useOverride && overrideSettings.duration !== undefined 
+        ? parseFloat(overrideSettings.duration) 
+        : (parseFloat(settings.duration) || defaultAnimationProps.duration),
+      ease: useOverride && overrideSettings.ease !== undefined 
+        ? overrideSettings.ease 
+        : (settings.ease || defaultAnimationProps.ease)
     };
     
-    // Use WordPress offset settings for all effects
-    const effectOffsetStart = offsetStart;
-    const effectOffsetEnd = offsetEnd;
+    // Use override offset settings if provided, otherwise use global WordPress settings
+    const effectOffsetStart = useOverride && overrideSettings.offsetStart !== undefined 
+      ? parseInt(overrideSettings.offsetStart) 
+      : offsetStart;
+    const effectOffsetEnd = useOverride && overrideSettings.offsetEnd !== undefined 
+      ? parseInt(overrideSettings.offsetEnd) 
+      : offsetEnd;
+    
+    debug.log('Building effect', effectNumber, 'with override:', useOverride, {
+      animationProps,
+      effectOffsetStart,
+      effectOffsetEnd,
+      overrideSettings
+    });
     
     switch (effectNumber) {
       case 1: // Scale
       const effect1Settings = {
-        scaleDown: settings.effect1ScaleDown !== undefined && settings.effect1ScaleDown !== '' ? parseFloat(settings.effect1ScaleDown) : 0,
-        originX1: settings.effect1OriginX !== undefined && settings.effect1OriginX !== '' ? parseInt(settings.effect1OriginX) : 0,
-        originY1: settings.effect1OriginY !== undefined && settings.effect1OriginY !== '' ? parseInt(settings.effect1OriginY) : 50
+        scaleDown: useOverride && overrideSettings.effect1ScaleDown !== undefined 
+          ? parseFloat(overrideSettings.effect1ScaleDown) 
+          : (settings.effect1ScaleDown !== undefined && settings.effect1ScaleDown !== '' ? parseFloat(settings.effect1ScaleDown) : 0),
+        originX1: useOverride && overrideSettings.effect1OriginX !== undefined 
+          ? parseInt(overrideSettings.effect1OriginX) 
+          : (settings.effect1OriginX !== undefined && settings.effect1OriginX !== '' ? parseInt(settings.effect1OriginX) : 0),
+        originY1: useOverride && overrideSettings.effect1OriginY !== undefined 
+          ? parseInt(overrideSettings.effect1OriginY) 
+          : (settings.effect1OriginY !== undefined && settings.effect1OriginY !== '' ? parseInt(settings.effect1OriginY) : 50)
       };
       return {
         offsetStartAmount: effectOffsetStart,
@@ -298,9 +344,15 @@ const defaultAnimationProps = {
       
       case 2: // Blur
       const effect2Settings = {
-        blurAmount: settings.effect2BlurAmount !== undefined && settings.effect2BlurAmount !== '' ? parseFloat(settings.effect2BlurAmount) : 5,
-        blurScale: settings.effect2BlurScale !== undefined && settings.effect2BlurScale !== '' ? parseFloat(settings.effect2BlurScale) : 0.9,
-        blurDuration: settings.effect2BlurDuration !== undefined && settings.effect2BlurDuration !== '' ? parseFloat(settings.effect2BlurDuration) : 0.2
+        blurAmount: useOverride && overrideSettings.effect2BlurAmount !== undefined 
+          ? parseFloat(overrideSettings.effect2BlurAmount) 
+          : (settings.effect2BlurAmount !== undefined && settings.effect2BlurAmount !== '' ? parseFloat(settings.effect2BlurAmount) : 5),
+        blurScale: useOverride && overrideSettings.effect2BlurScale !== undefined 
+          ? parseFloat(overrideSettings.effect2BlurScale) 
+          : (settings.effect2BlurScale !== undefined && settings.effect2BlurScale !== '' ? parseFloat(settings.effect2BlurScale) : 0.9),
+        blurDuration: useOverride && overrideSettings.effect2BlurDuration !== undefined 
+          ? parseFloat(overrideSettings.effect2BlurDuration) 
+          : (settings.effect2BlurDuration !== undefined && settings.effect2BlurDuration !== '' ? parseFloat(settings.effect2BlurDuration) : 0.2)
       };
       return {
         offsetStartAmount: effectOffsetStart,
@@ -371,9 +423,15 @@ const defaultAnimationProps = {
       
       case 4: // Text Split
       const effect4Settings = {
-        textXRange: settings.effect4TextXRange !== undefined && settings.effect4TextXRange !== '' ? parseInt(settings.effect4TextXRange) : 50,
-        textYRange: settings.effect4TextYRange !== undefined && settings.effect4TextYRange !== '' ? parseInt(settings.effect4TextYRange) : 40,
-        staggerAmount: settings.effect4StaggerAmount !== undefined && settings.effect4StaggerAmount !== '' ? parseFloat(settings.effect4StaggerAmount) : 0.03
+        textXRange: useOverride && overrideSettings.effect4TextXRange !== undefined 
+          ? parseInt(overrideSettings.effect4TextXRange) 
+          : (settings.effect4TextXRange !== undefined && settings.effect4TextXRange !== '' ? parseInt(settings.effect4TextXRange) : 50),
+        textYRange: useOverride && overrideSettings.effect4TextYRange !== undefined 
+          ? parseInt(overrideSettings.effect4TextYRange) 
+          : (settings.effect4TextYRange !== undefined && settings.effect4TextYRange !== '' ? parseInt(settings.effect4TextYRange) : 40),
+        staggerAmount: useOverride && overrideSettings.effect4StaggerAmount !== undefined 
+          ? parseFloat(overrideSettings.effect4StaggerAmount) 
+          : (settings.effect4StaggerAmount !== undefined && settings.effect4StaggerAmount !== '' ? parseFloat(settings.effect4StaggerAmount) : 0.03)
       };
       return {
         offsetStartAmount: effectOffsetStart,
@@ -428,9 +486,15 @@ const defaultAnimationProps = {
       
       case 5: // Character Shuffle
       const effect5Settings = {
-        shuffleIterations: settings.effect5ShuffleIterations !== undefined && settings.effect5ShuffleIterations !== '' ? parseInt(settings.effect5ShuffleIterations) : 2,
-        shuffleDuration: settings.effect5ShuffleDuration !== undefined && settings.effect5ShuffleDuration !== '' ? parseFloat(settings.effect5ShuffleDuration) : 0.03,
-        charDelay: settings.effect5CharDelay !== undefined && settings.effect5CharDelay !== '' ? parseFloat(settings.effect5CharDelay) : 0.03
+        shuffleIterations: useOverride && overrideSettings.effect5ShuffleIterations !== undefined 
+          ? parseInt(overrideSettings.effect5ShuffleIterations) 
+          : (settings.effect5ShuffleIterations !== undefined && settings.effect5ShuffleIterations !== '' ? parseInt(settings.effect5ShuffleIterations) : 2),
+        shuffleDuration: useOverride && overrideSettings.effect5ShuffleDuration !== undefined 
+          ? parseFloat(overrideSettings.effect5ShuffleDuration) 
+          : (settings.effect5ShuffleDuration !== undefined && settings.effect5ShuffleDuration !== '' ? parseFloat(settings.effect5ShuffleDuration) : 0.03),
+        charDelay: useOverride && overrideSettings.effect5CharDelay !== undefined 
+          ? parseFloat(overrideSettings.effect5CharDelay) 
+          : (settings.effect5CharDelay !== undefined && settings.effect5CharDelay !== '' ? parseFloat(settings.effect5CharDelay) : 0.03)
       };
       return {
         offsetStartAmount: effectOffsetStart,
@@ -504,10 +568,18 @@ const defaultAnimationProps = {
       
       case 6: // Rotation
       const effect6Settings = {
-        rotation: settings.effect6Rotation !== undefined && settings.effect6Rotation !== '' ? parseInt(settings.effect6Rotation) : -90,
-        xPercent: settings.effect6XPercent !== undefined && settings.effect6XPercent !== '' ? parseInt(settings.effect6XPercent) : -5,
-        originX6: settings.effect6OriginX !== undefined && settings.effect6OriginX !== '' ? parseInt(settings.effect6OriginX) : 0,
-        originY6: settings.effect6OriginY !== undefined && settings.effect6OriginY !== '' ? parseInt(settings.effect6OriginY) : 100
+        rotation: useOverride && overrideSettings.effect6Rotation !== undefined 
+          ? parseInt(overrideSettings.effect6Rotation) 
+          : (settings.effect6Rotation !== undefined && settings.effect6Rotation !== '' ? parseInt(settings.effect6Rotation) : -90),
+        xPercent: useOverride && overrideSettings.effect6XPercent !== undefined 
+          ? parseInt(overrideSettings.effect6XPercent) 
+          : (settings.effect6XPercent !== undefined && settings.effect6XPercent !== '' ? parseInt(settings.effect6XPercent) : -5),
+        originX6: useOverride && overrideSettings.effect6OriginX !== undefined 
+          ? parseInt(overrideSettings.effect6OriginX) 
+          : (settings.effect6OriginX !== undefined && settings.effect6OriginX !== '' ? parseInt(settings.effect6OriginX) : 0),
+        originY6: useOverride && overrideSettings.effect6OriginY !== undefined 
+          ? parseInt(overrideSettings.effect6OriginY) 
+          : (settings.effect6OriginY !== undefined && settings.effect6OriginY !== '' ? parseInt(settings.effect6OriginY) : 100)
       };
       debug.log('Effect 6 settings loaded:', {
         rotation: effect6Settings.rotation,
@@ -555,7 +627,9 @@ const defaultAnimationProps = {
       
       case 7: // Move Away
       const effect7Settings = {
-        moveDistance: settings.effect7MoveDistance !== undefined && settings.effect7MoveDistance !== '' ? settings.effect7MoveDistance : null
+        moveDistance: useOverride && overrideSettings.effect7MoveDistance !== undefined && overrideSettings.effect7MoveDistance !== ''
+          ? overrideSettings.effect7MoveDistance 
+          : (settings.effect7MoveDistance !== undefined && settings.effect7MoveDistance !== '' ? settings.effect7MoveDistance : null)
       };
       return {
         offsetStartAmount: effectOffsetStart,
@@ -644,21 +718,47 @@ const defaultAnimationProps = {
   let currentActiveEffect = null;
   let activeTriggersMap = new Map(); // Map to track which triggers are active and their effects
 
-  // Helper function to check if an element matches a mapping selector
+  // Simple 3-tier effect lookup: direct mapping > ancestor mapping > global default
+  // Returns an object with effect number and optional override settings
   function getEffectForElement(element) {
+    // Priority 1: Direct mapping on this element
     for (const mapping of effectMappings) {
-      if (mapping.selector && mapping.effect) {
-        try {
-          if (element.matches(mapping.selector)) {
-            debug.log('Element matches mapping:', mapping.selector, '-> Effect', mapping.effect);
-            return parseInt(mapping.effect);
-          }
-        } catch (e) {
-          debug.warn('Invalid selector in mapping:', mapping.selector);
+      const { selector, effect, overrideEnabled, settings } = mapping;
+      if (!selector || !effect) continue;
+      try {
+        if (element.matches?.(selector.trim())) {
+          debug.log('Direct mapping match:', selector, '-> Effect', effect, 'Override:', overrideEnabled);
+          return {
+            effectNumber: parseInt(effect),
+            overrideEnabled: overrideEnabled === true,
+            settings: overrideEnabled ? settings : null
+          };
         }
+      } catch (e) {
+        debug.warn('Invalid selector in mapping:', selector, e);
       }
     }
-    return null; // No mapping found, use default
+    
+    // Priority 2: Inherited from mapped ancestor (closest wins)
+    for (const mapping of effectMappings) {
+      const { selector, effect, overrideEnabled, settings } = mapping;
+      if (!selector || !effect) continue;
+      try {
+        if (element.closest?.(selector.trim())) {
+          debug.log('Ancestor mapping match:', selector, '-> Effect', effect, 'Override:', overrideEnabled);
+          return {
+            effectNumber: parseInt(effect),
+            overrideEnabled: overrideEnabled === true,
+            settings: overrideEnabled ? settings : null
+          };
+        }
+      } catch (e) {
+        debug.warn('Invalid selector in mapping:', selector, e);
+      }
+    }
+    
+    // Priority 3: Global default
+    return null;
   }
 
   // Function to create ScrollTriggers for each content block
@@ -689,21 +789,33 @@ const defaultAnimationProps = {
     
     // Pre-build effects for each content block and cache them
     const blockEffects = contentBlocks.map((block, index) => {
-      const mappedEffectNumber = getEffectForElement(block);
-      const effectNumber = mappedEffectNumber !== null ? mappedEffectNumber : selectedEffect;
-      const effect = buildEffect(effectNumber);
+      const mappedResult = getEffectForElement(block);
+      
+      // Determine effect number and override settings
+      let effectNumber, overrideSettings;
+      if (mappedResult !== null) {
+        effectNumber = mappedResult.effectNumber;
+        overrideSettings = mappedResult.overrideEnabled ? mappedResult.settings : null;
+      } else {
+        effectNumber = selectedEffect;
+        overrideSettings = null;
+      }
+      
+      const effect = buildEffect(effectNumber, overrideSettings);
       
       debug.log(`Block ${index + 1} effect:`, {
         block,
-        mappedEffect: mappedEffectNumber,
+        mappedResult,
         usedEffect: effectNumber,
-        isDefault: mappedEffectNumber === null
+        hasOverride: overrideSettings !== null,
+        isDefault: mappedResult === null
       });
       
       return {
         block,
         effect,
-        effectNumber
+        effectNumber,
+        overrideSettings
       };
     });
     
@@ -746,7 +858,7 @@ const defaultAnimationProps = {
           } else if (currentActiveEffect !== effectNumber) {
             // Different effect - transition: leave current, enter new
             debug.log('Switching effect from', currentActiveEffect, 'to', effectNumber);
-            const previousEffect = buildEffect(currentActiveEffect);
+            const previousEffect = buildEffect(currentActiveEffect, null);
             if (previousEffect) {
               previousEffect.onLeave(logoElement);
             }
@@ -816,7 +928,7 @@ const defaultAnimationProps = {
           } else if (currentActiveEffect !== effectNumber) {
             // Different effect - transition
             debug.log('Switching effect from', currentActiveEffect, 'to', effectNumber);
-            const previousEffect = buildEffect(currentActiveEffect);
+            const previousEffect = buildEffect(currentActiveEffect, null);
             if (previousEffect) {
               previousEffect.onLeave(logoElement);
             }

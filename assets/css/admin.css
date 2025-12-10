@@ -255,6 +255,12 @@
     padding-right: 15px;
 }
 
+.caa-mapping-col-override {
+    flex: 0 0 70px;
+    text-align: center;
+    padding-right: 15px;
+}
+
 .caa-mapping-col-actions {
     flex: 0 0 60px;
     text-align: center;
@@ -354,5 +360,163 @@
 
 #caa-filtering-options {
     margin-top: 20px;
+}
+
+/* Mapping Row Wrapper */
+.caa-mapping-row-wrapper {
+    border-bottom: 1px solid #eee;
+}
+
+.caa-mapping-row-wrapper:last-child {
+    border-bottom: none;
+}
+
+.caa-mapping-row-wrapper:hover > .caa-mapping-row {
+    background: #f9f9f9;
+}
+
+/* Override Checkbox Styles */
+.caa-override-checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+}
+
+.caa-override-checkbox-label:hover {
+    background: #f0f0f1;
+}
+
+.caa-override-checkbox {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.caa-override-checkbox-label .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: #999;
+    transition: color 0.2s ease;
+}
+
+.caa-override-checkbox:checked + .dashicons {
+    color: #2271b1;
+}
+
+.caa-override-checkbox-label:hover .dashicons {
+    color: #666;
+}
+
+.caa-override-checkbox:checked + .dashicons,
+.caa-override-checkbox-label:hover .caa-override-checkbox:checked + .dashicons {
+    color: #2271b1;
+}
+
+/* Mapping Settings Panel */
+.caa-mapping-settings-panel {
+    display: none;
+    background: #f9f9f9;
+    border-top: 1px solid #eee;
+    padding: 15px 20px;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.caa-mapping-settings-content {
+    max-width: 100%;
+}
+
+.caa-settings-section {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px dashed #ddd;
+}
+
+.caa-settings-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.caa-settings-section h4,
+.caa-effect-settings h4 {
+    margin: 0 0 10px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.caa-settings-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.caa-setting-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.caa-setting-field label {
+    font-size: 12px;
+    color: #50575e;
+    white-space: nowrap;
+    min-width: 70px;
+}
+
+.caa-setting-field input.small-text {
+    width: 60px;
+}
+
+.caa-setting-field select {
+    min-width: 100px;
+}
+
+.caa-setting-field span {
+    font-size: 12px;
+    color: #666;
+}
+
+.caa-setting-field-wide {
+    flex: 1;
+    min-width: 200px;
+}
+
+.caa-setting-field-wide input.regular-text {
+    flex: 1;
+    max-width: 200px;
+}
+
+/* Effect-specific settings sections */
+.caa-effect-settings {
+    display: none;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px dashed #ddd;
+}
+
+.caa-effect-settings[style*="display: block"] {
+    display: block !important;
+}
+
+.caa-effect-settings .description {
+    margin: 0;
+    padding: 10px;
+    background: #fff;
+    border-left: 3px solid #2271b1;
+    font-style: italic;
+    color: #646970;
+}
+
+/* Header override column */
+.caa-mappings-header .caa-mapping-col-override {
+    flex: 0 0 70px;
+    text-align: center;
+    padding-right: 15px;
 }
 

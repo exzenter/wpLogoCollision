@@ -68,6 +68,15 @@ function caa_sanitize_ease($value) {
     return in_array($value, $valid_eases, true) ? $value : 'power4';
 }
 
+function caa_sanitize_mobile_breakpoint($value) {
+    $value = trim($value);
+    if ($value === '' || $value === null) {
+        return '0';
+    }
+    // Only allow positive integers (0 means disabled)
+    return (string) absint($value);
+}
+
 // Handle Mappings form submission
 if (isset($_POST['caa_save_mappings']) && check_admin_referer('caa_pro_mappings_nonce')) {
     $mappings = array();
@@ -76,13 +85,63 @@ if (isset($_POST['caa_save_mappings']) && check_admin_referer('caa_pro_mappings_
         foreach ($caa_mappings as $mapping) {
             $selector = isset($mapping['selector']) ? sanitize_text_field($mapping['selector']) : '';
             $effect = isset($mapping['effect']) ? caa_sanitize_effect(sanitize_text_field($mapping['effect'])) : '1';
+            $override_enabled = isset($mapping['override_enabled']) && $mapping['override_enabled'] === '1';
             
             // Only save non-empty selectors
             if (!empty($selector)) {
-                $mappings[] = array(
+                $mapping_data = array(
                     'selector' => $selector,
-                    'effect' => $effect
+                    'effect' => $effect,
+                    'override_enabled' => $override_enabled
                 );
+                
+                // Only save settings if override is enabled
+                if ($override_enabled && isset($mapping['settings']) && is_array($mapping['settings'])) {
+                    $settings = $mapping['settings'];
+                    $mapping_data['settings'] = array(
+                        // Global animation settings
+                        'duration' => isset($settings['duration']) ? caa_sanitize_float(sanitize_text_field($settings['duration'])) : '0.6',
+                        'ease' => isset($settings['ease']) ? caa_sanitize_ease(sanitize_text_field($settings['ease'])) : 'power4',
+                        'offset_start' => isset($settings['offset_start']) ? caa_sanitize_offset(sanitize_text_field($settings['offset_start'])) : '30',
+                        'offset_end' => isset($settings['offset_end']) ? caa_sanitize_offset(sanitize_text_field($settings['offset_end'])) : '10',
+                    );
+                    
+                    // Effect-specific settings based on selected effect
+                    switch ($effect) {
+                        case '1': // Scale
+                            $mapping_data['settings']['effect1_scale_down'] = isset($settings['effect1_scale_down']) ? caa_sanitize_float(sanitize_text_field($settings['effect1_scale_down'])) : '0';
+                            $mapping_data['settings']['effect1_origin_x'] = isset($settings['effect1_origin_x']) ? caa_sanitize_percent(sanitize_text_field($settings['effect1_origin_x'])) : '0';
+                            $mapping_data['settings']['effect1_origin_y'] = isset($settings['effect1_origin_y']) ? caa_sanitize_percent(sanitize_text_field($settings['effect1_origin_y'])) : '50';
+                            break;
+                        case '2': // Blur
+                            $mapping_data['settings']['effect2_blur_amount'] = isset($settings['effect2_blur_amount']) ? caa_sanitize_float(sanitize_text_field($settings['effect2_blur_amount'])) : '5';
+                            $mapping_data['settings']['effect2_blur_scale'] = isset($settings['effect2_blur_scale']) ? caa_sanitize_float(sanitize_text_field($settings['effect2_blur_scale'])) : '0.9';
+                            $mapping_data['settings']['effect2_blur_duration'] = isset($settings['effect2_blur_duration']) ? caa_sanitize_float(sanitize_text_field($settings['effect2_blur_duration'])) : '0.2';
+                            break;
+                        case '4': // Text Split
+                            $mapping_data['settings']['effect4_text_x_range'] = isset($settings['effect4_text_x_range']) ? caa_sanitize_offset(sanitize_text_field($settings['effect4_text_x_range'])) : '50';
+                            $mapping_data['settings']['effect4_text_y_range'] = isset($settings['effect4_text_y_range']) ? caa_sanitize_offset(sanitize_text_field($settings['effect4_text_y_range'])) : '40';
+                            $mapping_data['settings']['effect4_stagger_amount'] = isset($settings['effect4_stagger_amount']) ? caa_sanitize_float(sanitize_text_field($settings['effect4_stagger_amount'])) : '0.03';
+                            break;
+                        case '5': // Character Shuffle
+                            $mapping_data['settings']['effect5_shuffle_iterations'] = isset($settings['effect5_shuffle_iterations']) ? caa_sanitize_offset(sanitize_text_field($settings['effect5_shuffle_iterations'])) : '2';
+                            $mapping_data['settings']['effect5_shuffle_duration'] = isset($settings['effect5_shuffle_duration']) ? caa_sanitize_float(sanitize_text_field($settings['effect5_shuffle_duration'])) : '0.03';
+                            $mapping_data['settings']['effect5_char_delay'] = isset($settings['effect5_char_delay']) ? caa_sanitize_float(sanitize_text_field($settings['effect5_char_delay'])) : '0.03';
+                            break;
+                        case '6': // Rotation
+                            $mapping_data['settings']['effect6_rotation'] = isset($settings['effect6_rotation']) ? caa_sanitize_offset(sanitize_text_field($settings['effect6_rotation'])) : '-90';
+                            $mapping_data['settings']['effect6_x_percent'] = isset($settings['effect6_x_percent']) ? caa_sanitize_offset(sanitize_text_field($settings['effect6_x_percent'])) : '-5';
+                            $mapping_data['settings']['effect6_origin_x'] = isset($settings['effect6_origin_x']) ? caa_sanitize_percent(sanitize_text_field($settings['effect6_origin_x'])) : '0';
+                            $mapping_data['settings']['effect6_origin_y'] = isset($settings['effect6_origin_y']) ? caa_sanitize_percent(sanitize_text_field($settings['effect6_origin_y'])) : '100';
+                            break;
+                        case '7': // Move Away
+                            $mapping_data['settings']['effect7_move_distance'] = isset($settings['effect7_move_distance']) ? caa_sanitize_move_away(sanitize_text_field($settings['effect7_move_distance'])) : '';
+                            break;
+                        // Effect 3 (Slide Text) uses only global settings
+                    }
+                }
+                
+                $mappings[] = $mapping_data;
             }
         }
     }
@@ -139,6 +198,7 @@ if (isset($_POST['caa_save_settings']) && check_admin_referer('caa_settings_nonc
     update_option('caa_excluded_elements', isset($_POST['caa_excluded_elements']) ? sanitize_textarea_field(wp_unslash($_POST['caa_excluded_elements'])) : '');
     update_option('caa_global_offset', isset($_POST['caa_global_offset']) ? caa_sanitize_offset(sanitize_text_field(wp_unslash($_POST['caa_global_offset']))) : '0');
     update_option('caa_debug_mode', isset($_POST['caa_debug_mode']) ? '1' : '0');
+    update_option('caa_mobile_breakpoint', isset($_POST['caa_mobile_breakpoint']) ? caa_sanitize_mobile_breakpoint(sanitize_text_field(wp_unslash($_POST['caa_mobile_breakpoint']))) : '0');
     
     // Global animation settings
     update_option('caa_duration', isset($_POST['caa_duration']) ? caa_sanitize_float(sanitize_text_field(wp_unslash($_POST['caa_duration']))) : '0.6');
@@ -185,6 +245,7 @@ $included_elements = get_option('caa_included_elements', '');
 $excluded_elements = get_option('caa_excluded_elements', '');
 $global_offset = get_option('caa_global_offset', '0');
 $debug_mode = get_option('caa_debug_mode', '0');
+$mobile_breakpoint = get_option('caa_mobile_breakpoint', '0');
 
 // Get global animation settings
 $duration = get_option('caa_duration', '0.6');
@@ -971,6 +1032,32 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                         </p>
                     </td>
                 </tr>
+                
+                <tr>
+                    <th scope="row">
+                        <label for="caa_mobile_breakpoint"><?php esc_html_e('Disable on Small Screens', 'logo-collision'); ?></label>
+                    </th>
+                    <td>
+                        <input 
+                            type="number" 
+                            id="caa_mobile_breakpoint" 
+                            name="caa_mobile_breakpoint" 
+                            value="<?php echo esc_attr($mobile_breakpoint); ?>" 
+                            class="small-text"
+                            min="0"
+                            step="1"
+                            placeholder="0"
+                        />
+                        <span>px</span>
+                        <p class="description">
+                            <?php esc_html_e('Disable the plugin for viewports smaller than this width. Set to 0 to disable this feature.', 'logo-collision'); ?>
+                            <br>
+                            <?php esc_html_e('When enabled, no plugin files will be loaded on small screens for maximum performance. If a user resizes from small to large, the plugin will NOT activate (page reload required).', 'logo-collision'); ?>
+                            <br>
+                            <?php esc_html_e('Common breakpoints: 768px (tablets), 1024px (small laptops)', 'logo-collision'); ?>
+                        </p>
+                    </td>
+                </tr>
             </tbody>
         </table>
         
@@ -1006,6 +1093,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                     <div class="caa-mappings-header">
                         <span class="caa-mapping-col-selector"><?php esc_html_e('Element Selector', 'logo-collision'); ?></span>
                         <span class="caa-mapping-col-effect"><?php esc_html_e('Effect', 'logo-collision'); ?></span>
+                        <span class="caa-mapping-col-override"><?php esc_html_e('Override', 'logo-collision'); ?></span>
                         <span class="caa-mapping-col-actions"><?php esc_html_e('Actions', 'logo-collision'); ?></span>
                     </div>
                     
@@ -1013,37 +1101,258 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                         <?php
                         $effect_mappings = get_option('caa_pro_effect_mappings', array());
                         if (empty($effect_mappings)) {
-                            $effect_mappings = array(array('selector' => '', 'effect' => '1'));
+                            $effect_mappings = array(array('selector' => '', 'effect' => '1', 'override_enabled' => false));
                         }
                         foreach ($effect_mappings as $index => $mapping) :
                             $selector_value = isset($mapping['selector']) ? $mapping['selector'] : '';
                             $effect_value = isset($mapping['effect']) ? $mapping['effect'] : '1';
+                            $override_enabled = isset($mapping['override_enabled']) && $mapping['override_enabled'];
+                            $settings = isset($mapping['settings']) ? $mapping['settings'] : array();
+                            
+                            // Get settings values with defaults
+                            $s_duration = isset($settings['duration']) ? $settings['duration'] : '0.6';
+                            $s_ease = isset($settings['ease']) ? $settings['ease'] : 'power4';
+                            $s_offset_start = isset($settings['offset_start']) ? $settings['offset_start'] : '30';
+                            $s_offset_end = isset($settings['offset_end']) ? $settings['offset_end'] : '10';
+                            
+                            // Effect 1 settings
+                            $s_effect1_scale_down = isset($settings['effect1_scale_down']) ? $settings['effect1_scale_down'] : '0';
+                            $s_effect1_origin_x = isset($settings['effect1_origin_x']) ? $settings['effect1_origin_x'] : '0';
+                            $s_effect1_origin_y = isset($settings['effect1_origin_y']) ? $settings['effect1_origin_y'] : '50';
+                            
+                            // Effect 2 settings
+                            $s_effect2_blur_amount = isset($settings['effect2_blur_amount']) ? $settings['effect2_blur_amount'] : '5';
+                            $s_effect2_blur_scale = isset($settings['effect2_blur_scale']) ? $settings['effect2_blur_scale'] : '0.9';
+                            $s_effect2_blur_duration = isset($settings['effect2_blur_duration']) ? $settings['effect2_blur_duration'] : '0.2';
+                            
+                            // Effect 4 settings
+                            $s_effect4_text_x_range = isset($settings['effect4_text_x_range']) ? $settings['effect4_text_x_range'] : '50';
+                            $s_effect4_text_y_range = isset($settings['effect4_text_y_range']) ? $settings['effect4_text_y_range'] : '40';
+                            $s_effect4_stagger_amount = isset($settings['effect4_stagger_amount']) ? $settings['effect4_stagger_amount'] : '0.03';
+                            
+                            // Effect 5 settings
+                            $s_effect5_shuffle_iterations = isset($settings['effect5_shuffle_iterations']) ? $settings['effect5_shuffle_iterations'] : '2';
+                            $s_effect5_shuffle_duration = isset($settings['effect5_shuffle_duration']) ? $settings['effect5_shuffle_duration'] : '0.03';
+                            $s_effect5_char_delay = isset($settings['effect5_char_delay']) ? $settings['effect5_char_delay'] : '0.03';
+                            
+                            // Effect 6 settings
+                            $s_effect6_rotation = isset($settings['effect6_rotation']) ? $settings['effect6_rotation'] : '-90';
+                            $s_effect6_x_percent = isset($settings['effect6_x_percent']) ? $settings['effect6_x_percent'] : '-5';
+                            $s_effect6_origin_x = isset($settings['effect6_origin_x']) ? $settings['effect6_origin_x'] : '0';
+                            $s_effect6_origin_y = isset($settings['effect6_origin_y']) ? $settings['effect6_origin_y'] : '100';
+                            
+                            // Effect 7 settings
+                            $s_effect7_move_distance = isset($settings['effect7_move_distance']) ? $settings['effect7_move_distance'] : '';
                         ?>
-                        <div class="caa-mapping-row">
-                            <div class="caa-mapping-col-selector">
-                                <input 
-                                    type="text" 
-                                    name="caa_mappings[<?php echo esc_attr($index); ?>][selector]" 
-                                    value="<?php echo esc_attr($selector_value); ?>" 
-                                    class="regular-text"
-                                    placeholder="#element-id or .class-name"
-                                />
+                        <div class="caa-mapping-row-wrapper">
+                            <div class="caa-mapping-row">
+                                <div class="caa-mapping-col-selector">
+                                    <input 
+                                        type="text" 
+                                        name="caa_mappings[<?php echo esc_attr($index); ?>][selector]" 
+                                        value="<?php echo esc_attr($selector_value); ?>" 
+                                        class="regular-text caa-mapping-selector"
+                                        placeholder="#element-id or .class-name"
+                                    />
+                                </div>
+                                <div class="caa-mapping-col-effect">
+                                    <select name="caa_mappings[<?php echo esc_attr($index); ?>][effect]" class="caa-mapping-effect-select">
+                                        <option value="1" <?php selected($effect_value, '1'); ?>><?php esc_html_e('Effect 1: Scale', 'logo-collision'); ?></option>
+                                        <option value="2" <?php selected($effect_value, '2'); ?>><?php esc_html_e('Effect 2: Blur', 'logo-collision'); ?></option>
+                                        <option value="3" <?php selected($effect_value, '3'); ?>><?php esc_html_e('Effect 3: Slide Text', 'logo-collision'); ?></option>
+                                        <option value="4" <?php selected($effect_value, '4'); ?>><?php esc_html_e('Effect 4: Text Split', 'logo-collision'); ?></option>
+                                        <option value="5" <?php selected($effect_value, '5'); ?>><?php esc_html_e('Effect 5: Character Shuffle', 'logo-collision'); ?></option>
+                                        <option value="6" <?php selected($effect_value, '6'); ?>><?php esc_html_e('Effect 6: Rotation', 'logo-collision'); ?></option>
+                                        <option value="7" <?php selected($effect_value, '7'); ?>><?php esc_html_e('Effect 7: Move Away', 'logo-collision'); ?></option>
+                                    </select>
+                                </div>
+                                <div class="caa-mapping-col-override">
+                                    <label class="caa-override-checkbox-label">
+                                        <input 
+                                            type="checkbox" 
+                                            name="caa_mappings[<?php echo esc_attr($index); ?>][override_enabled]" 
+                                            value="1"
+                                            class="caa-override-checkbox"
+                                            <?php checked($override_enabled); ?>
+                                        />
+                                        <span class="dashicons dashicons-admin-generic"></span>
+                                    </label>
+                                </div>
+                                <div class="caa-mapping-col-actions">
+                                    <button type="button" class="button caa-remove-mapping" title="<?php esc_attr_e('Remove Mapping', 'logo-collision'); ?>">
+                                        <span class="dashicons dashicons-trash"></span>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="caa-mapping-col-effect">
-                                <select name="caa_mappings[<?php echo esc_attr($index); ?>][effect]">
-                                    <option value="1" <?php selected($effect_value, '1'); ?>><?php esc_html_e('Effect 1: Scale', 'logo-collision'); ?></option>
-                                    <option value="2" <?php selected($effect_value, '2'); ?>><?php esc_html_e('Effect 2: Blur', 'logo-collision'); ?></option>
-                                    <option value="3" <?php selected($effect_value, '3'); ?>><?php esc_html_e('Effect 3: Slide Text', 'logo-collision'); ?></option>
-                                    <option value="4" <?php selected($effect_value, '4'); ?>><?php esc_html_e('Effect 4: Text Split', 'logo-collision'); ?></option>
-                                    <option value="5" <?php selected($effect_value, '5'); ?>><?php esc_html_e('Effect 5: Character Shuffle', 'logo-collision'); ?></option>
-                                    <option value="6" <?php selected($effect_value, '6'); ?>><?php esc_html_e('Effect 6: Rotation', 'logo-collision'); ?></option>
-                                    <option value="7" <?php selected($effect_value, '7'); ?>><?php esc_html_e('Effect 7: Move Away', 'logo-collision'); ?></option>
-                                </select>
-                            </div>
-                            <div class="caa-mapping-col-actions">
-                                <button type="button" class="button caa-remove-mapping" title="<?php esc_attr_e('Remove Mapping', 'logo-collision'); ?>">
-                                    <span class="dashicons dashicons-trash"></span>
-                                </button>
+                            
+                            <!-- Collapsible Settings Panel -->
+                            <div class="caa-mapping-settings-panel" data-effect="<?php echo esc_attr($effect_value); ?>" <?php echo $override_enabled ? 'style="display: block;"' : ''; ?>>
+                                <div class="caa-mapping-settings-content">
+                                    <!-- Global Animation Settings -->
+                                    <div class="caa-settings-section">
+                                        <h4><?php esc_html_e('Animation Settings', 'logo-collision'); ?></h4>
+                                        <div class="caa-settings-grid">
+                                            <div class="caa-setting-field">
+                                                <label><?php esc_html_e('Duration', 'logo-collision'); ?></label>
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][duration]" value="<?php echo esc_attr($s_duration); ?>" min="0.1" max="2" step="0.1" class="small-text" />
+                                                <span>s</span>
+                                            </div>
+                                            <div class="caa-setting-field">
+                                                <label><?php esc_html_e('Ease', 'logo-collision'); ?></label>
+                                                <select name="caa_mappings[<?php echo esc_attr($index); ?>][settings][ease]">
+                                                    <option value="power1" <?php selected($s_ease, 'power1'); ?>>Power 1</option>
+                                                    <option value="power2" <?php selected($s_ease, 'power2'); ?>>Power 2</option>
+                                                    <option value="power3" <?php selected($s_ease, 'power3'); ?>>Power 3</option>
+                                                    <option value="power4" <?php selected($s_ease, 'power4'); ?>>Power 4</option>
+                                                    <option value="expo" <?php selected($s_ease, 'expo'); ?>>Expo</option>
+                                                    <option value="sine" <?php selected($s_ease, 'sine'); ?>>Sine</option>
+                                                    <option value="back" <?php selected($s_ease, 'back'); ?>>Back</option>
+                                                    <option value="elastic" <?php selected($s_ease, 'elastic'); ?>>Elastic</option>
+                                                    <option value="bounce" <?php selected($s_ease, 'bounce'); ?>>Bounce</option>
+                                                    <option value="none" <?php selected($s_ease, 'none'); ?>>None</option>
+                                                </select>
+                                            </div>
+                                            <div class="caa-setting-field">
+                                                <label><?php esc_html_e('Start Offset', 'logo-collision'); ?></label>
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][offset_start]" value="<?php echo esc_attr($s_offset_start); ?>" step="1" class="small-text" />
+                                                <span>px</span>
+                                            </div>
+                                            <div class="caa-setting-field">
+                                                <label><?php esc_html_e('End Offset', 'logo-collision'); ?></label>
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][offset_end]" value="<?php echo esc_attr($s_offset_end); ?>" step="1" class="small-text" />
+                                                <span>px</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Effect 1: Scale Settings -->
+                                    <div class="caa-effect-settings caa-effect-settings-1" <?php echo $effect_value === '1' ? 'style="display: block;"' : ''; ?>>
+                                        <h4><?php esc_html_e('Scale Settings', 'logo-collision'); ?></h4>
+                                        <div class="caa-settings-grid">
+                                            <div class="caa-setting-field">
+                                                <label><?php esc_html_e('Scale Down', 'logo-collision'); ?></label>
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect1_scale_down]" value="<?php echo esc_attr($s_effect1_scale_down); ?>" min="0" max="1" step="0.1" class="small-text" />
+                                            </div>
+                                            <div class="caa-setting-field">
+                                                <label><?php esc_html_e('Origin X', 'logo-collision'); ?></label>
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect1_origin_x]" value="<?php echo esc_attr($s_effect1_origin_x); ?>" min="0" max="100" step="5" class="small-text" />
+                                                <span>%</span>
+                                            </div>
+                                            <div class="caa-setting-field">
+                                                <label><?php esc_html_e('Origin Y', 'logo-collision'); ?></label>
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect1_origin_y]" value="<?php echo esc_attr($s_effect1_origin_y); ?>" min="0" max="100" step="5" class="small-text" />
+                                                <span>%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Effect 2: Blur Settings -->
+                                    <div class="caa-effect-settings caa-effect-settings-2" <?php echo $effect_value === '2' ? 'style="display: block;"' : ''; ?>>
+                                        <h4><?php esc_html_e('Blur Settings', 'logo-collision'); ?></h4>
+                                        <div class="caa-settings-grid">
+                                            <div class="caa-setting-field">
+                                                <label><?php esc_html_e('Blur Amount', 'logo-collision'); ?></label>
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect2_blur_amount]" value="<?php echo esc_attr($s_effect2_blur_amount); ?>" min="0" max="20" step="0.5" class="small-text" />
+                                                <span>px</span>
+                                            </div>
+                                            <div class="caa-setting-field">
+                                                <label><?php esc_html_e('Scale', 'logo-collision'); ?></label>
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect2_blur_scale]" value="<?php echo esc_attr($s_effect2_blur_scale); ?>" min="0.5" max="1" step="0.05" class="small-text" />
+                                            </div>
+                                            <div class="caa-setting-field">
+                                                <label><?php esc_html_e('Duration', 'logo-collision'); ?></label>
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect2_blur_duration]" value="<?php echo esc_attr($s_effect2_blur_duration); ?>" min="0.1" max="1" step="0.1" class="small-text" />
+                                                <span>s</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Effect 3: Slide Text (no specific settings) -->
+                                    <div class="caa-effect-settings caa-effect-settings-3" <?php echo $effect_value === '3' ? 'style="display: block;"' : ''; ?>>
+                                        <p class="description"><?php esc_html_e('This effect uses only the animation settings above.', 'logo-collision'); ?></p>
+                                    </div>
+                                    
+                                    <!-- Effect 4: Text Split Settings -->
+                                    <div class="caa-effect-settings caa-effect-settings-4" <?php echo $effect_value === '4' ? 'style="display: block;"' : ''; ?>>
+                                        <h4><?php esc_html_e('Text Split Settings', 'logo-collision'); ?></h4>
+                                        <div class="caa-settings-grid">
+                                            <div class="caa-setting-field">
+                                                <label><?php esc_html_e('X Range', 'logo-collision'); ?></label>
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect4_text_x_range]" value="<?php echo esc_attr($s_effect4_text_x_range); ?>" min="0" max="200" step="5" class="small-text" />
+                                                <span>px</span>
+                                            </div>
+                                            <div class="caa-setting-field">
+                                                <label><?php esc_html_e('Y Range', 'logo-collision'); ?></label>
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect4_text_y_range]" value="<?php echo esc_attr($s_effect4_text_y_range); ?>" min="0" max="200" step="5" class="small-text" />
+                                                <span>px</span>
+                                            </div>
+                                            <div class="caa-setting-field">
+                                                <label><?php esc_html_e('Stagger', 'logo-collision'); ?></label>
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect4_stagger_amount]" value="<?php echo esc_attr($s_effect4_stagger_amount); ?>" min="0" max="0.5" step="0.01" class="small-text" />
+                                                <span>s</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Effect 5: Character Shuffle Settings -->
+                                    <div class="caa-effect-settings caa-effect-settings-5" <?php echo $effect_value === '5' ? 'style="display: block;"' : ''; ?>>
+                                        <h4><?php esc_html_e('Character Shuffle Settings', 'logo-collision'); ?></h4>
+                                        <div class="caa-settings-grid">
+                                            <div class="caa-setting-field">
+                                                <label><?php esc_html_e('Iterations', 'logo-collision'); ?></label>
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect5_shuffle_iterations]" value="<?php echo esc_attr($s_effect5_shuffle_iterations); ?>" min="1" max="10" step="1" class="small-text" />
+                                            </div>
+                                            <div class="caa-setting-field">
+                                                <label><?php esc_html_e('Shuffle Duration', 'logo-collision'); ?></label>
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect5_shuffle_duration]" value="<?php echo esc_attr($s_effect5_shuffle_duration); ?>" min="0.01" max="0.1" step="0.01" class="small-text" />
+                                                <span>s</span>
+                                            </div>
+                                            <div class="caa-setting-field">
+                                                <label><?php esc_html_e('Char Delay', 'logo-collision'); ?></label>
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect5_char_delay]" value="<?php echo esc_attr($s_effect5_char_delay); ?>" min="0" max="0.2" step="0.01" class="small-text" />
+                                                <span>s</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Effect 6: Rotation Settings -->
+                                    <div class="caa-effect-settings caa-effect-settings-6" <?php echo $effect_value === '6' ? 'style="display: block;"' : ''; ?>>
+                                        <h4><?php esc_html_e('Rotation Settings', 'logo-collision'); ?></h4>
+                                        <div class="caa-settings-grid">
+                                            <div class="caa-setting-field">
+                                                <label><?php esc_html_e('Rotation', 'logo-collision'); ?></label>
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect6_rotation]" value="<?php echo esc_attr($s_effect6_rotation); ?>" min="-180" max="180" step="5" class="small-text" />
+                                                <span>°</span>
+                                            </div>
+                                            <div class="caa-setting-field">
+                                                <label><?php esc_html_e('X Percent', 'logo-collision'); ?></label>
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect6_x_percent]" value="<?php echo esc_attr($s_effect6_x_percent); ?>" min="-50" max="50" step="1" class="small-text" />
+                                                <span>%</span>
+                                            </div>
+                                            <div class="caa-setting-field">
+                                                <label><?php esc_html_e('Origin X', 'logo-collision'); ?></label>
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect6_origin_x]" value="<?php echo esc_attr($s_effect6_origin_x); ?>" min="0" max="100" step="5" class="small-text" />
+                                                <span>%</span>
+                                            </div>
+                                            <div class="caa-setting-field">
+                                                <label><?php esc_html_e('Origin Y', 'logo-collision'); ?></label>
+                                                <input type="number" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect6_origin_y]" value="<?php echo esc_attr($s_effect6_origin_y); ?>" min="0" max="100" step="5" class="small-text" />
+                                                <span>%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Effect 7: Move Away Settings -->
+                                    <div class="caa-effect-settings caa-effect-settings-7" <?php echo $effect_value === '7' ? 'style="display: block;"' : ''; ?>>
+                                        <h4><?php esc_html_e('Move Away Settings', 'logo-collision'); ?></h4>
+                                        <div class="caa-settings-grid">
+                                            <div class="caa-setting-field caa-setting-field-wide">
+                                                <label><?php esc_html_e('Move Distance', 'logo-collision'); ?></label>
+                                                <input type="text" name="caa_mappings[<?php echo esc_attr($index); ?>][settings][effect7_move_distance]" value="<?php echo esc_attr($s_effect7_move_distance); ?>" class="regular-text" placeholder="auto (e.g., 100px or 50%)" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <?php endforeach; ?>
@@ -1074,7 +1383,7 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                     <li><?php esc_html_e('The logo to rotate when passing your testimonials', 'logo-collision'); ?></li>
                 </ul>
                 <p>
-                    <?php esc_html_e('Enter a CSS selector (ID or class) and choose which effect to apply. The element must also be included in the "Include Elements" setting on the General Settings tab.', 'logo-collision'); ?>
+                    <?php esc_html_e('Enter a CSS selector (ID or class) and choose which effect to apply.', 'logo-collision'); ?>
                 </p>
             </div>
         </div><!-- End Mappings Sub-tab -->

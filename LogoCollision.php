@@ -127,6 +127,12 @@ class Context_Aware_Animation {
             'default' => '0'
         ));
         
+        register_setting('caa_settings_group', 'caa_mobile_breakpoint', array(
+            'type' => 'string',
+            'sanitize_callback' => array($this, 'sanitize_mobile_breakpoint'),
+            'default' => '0'
+        ));
+        
         // Global animation settings
         register_setting('caa_settings_group', 'caa_duration', array(
             'type' => 'string',
@@ -328,6 +334,19 @@ class Context_Aware_Animation {
     }
     
     /**
+     * Sanitize mobile breakpoint value
+     */
+    public function sanitize_mobile_breakpoint($value) {
+        $value = trim($value);
+        if ($value === '' || $value === null) {
+            return '0';
+        }
+        // Only allow positive integers (0 means disabled)
+        $int_value = absint($value);
+        return (string)$int_value;
+    }
+    
+    /**
      * Sanitize float value
      */
     public function sanitize_float($value) {
@@ -393,12 +412,62 @@ class Context_Aware_Animation {
             if (isset($mapping['selector']) && isset($mapping['effect'])) {
                 $selector = sanitize_text_field($mapping['selector']);
                 $effect = $this->sanitize_effect($mapping['effect']);
+                $override_enabled = isset($mapping['override_enabled']) && $mapping['override_enabled'];
                 
                 if (!empty($selector)) {
-                    $sanitized[] = array(
+                    $mapping_data = array(
                         'selector' => $selector,
-                        'effect' => $effect
+                        'effect' => $effect,
+                        'override_enabled' => $override_enabled
                     );
+                    
+                    // Only save settings if override is enabled
+                    if ($override_enabled && isset($mapping['settings']) && is_array($mapping['settings'])) {
+                        $settings = $mapping['settings'];
+                        $mapping_data['settings'] = array(
+                            // Global animation settings
+                            'duration' => isset($settings['duration']) ? $this->sanitize_float($settings['duration']) : '0.6',
+                            'ease' => isset($settings['ease']) ? $this->sanitize_ease($settings['ease']) : 'power4',
+                            'offset_start' => isset($settings['offset_start']) ? $this->sanitize_offset($settings['offset_start']) : '30',
+                            'offset_end' => isset($settings['offset_end']) ? $this->sanitize_offset($settings['offset_end']) : '10',
+                        );
+                        
+                        // Effect-specific settings based on selected effect
+                        switch ($effect) {
+                            case '1': // Scale
+                                $mapping_data['settings']['effect1_scale_down'] = isset($settings['effect1_scale_down']) ? $this->sanitize_float($settings['effect1_scale_down']) : '0';
+                                $mapping_data['settings']['effect1_origin_x'] = isset($settings['effect1_origin_x']) ? $this->sanitize_percent($settings['effect1_origin_x']) : '0';
+                                $mapping_data['settings']['effect1_origin_y'] = isset($settings['effect1_origin_y']) ? $this->sanitize_percent($settings['effect1_origin_y']) : '50';
+                                break;
+                            case '2': // Blur
+                                $mapping_data['settings']['effect2_blur_amount'] = isset($settings['effect2_blur_amount']) ? $this->sanitize_float($settings['effect2_blur_amount']) : '5';
+                                $mapping_data['settings']['effect2_blur_scale'] = isset($settings['effect2_blur_scale']) ? $this->sanitize_float($settings['effect2_blur_scale']) : '0.9';
+                                $mapping_data['settings']['effect2_blur_duration'] = isset($settings['effect2_blur_duration']) ? $this->sanitize_float($settings['effect2_blur_duration']) : '0.2';
+                                break;
+                            case '4': // Text Split
+                                $mapping_data['settings']['effect4_text_x_range'] = isset($settings['effect4_text_x_range']) ? $this->sanitize_offset($settings['effect4_text_x_range']) : '50';
+                                $mapping_data['settings']['effect4_text_y_range'] = isset($settings['effect4_text_y_range']) ? $this->sanitize_offset($settings['effect4_text_y_range']) : '40';
+                                $mapping_data['settings']['effect4_stagger_amount'] = isset($settings['effect4_stagger_amount']) ? $this->sanitize_float($settings['effect4_stagger_amount']) : '0.03';
+                                break;
+                            case '5': // Character Shuffle
+                                $mapping_data['settings']['effect5_shuffle_iterations'] = isset($settings['effect5_shuffle_iterations']) ? $this->sanitize_offset($settings['effect5_shuffle_iterations']) : '2';
+                                $mapping_data['settings']['effect5_shuffle_duration'] = isset($settings['effect5_shuffle_duration']) ? $this->sanitize_float($settings['effect5_shuffle_duration']) : '0.03';
+                                $mapping_data['settings']['effect5_char_delay'] = isset($settings['effect5_char_delay']) ? $this->sanitize_float($settings['effect5_char_delay']) : '0.03';
+                                break;
+                            case '6': // Rotation
+                                $mapping_data['settings']['effect6_rotation'] = isset($settings['effect6_rotation']) ? $this->sanitize_offset($settings['effect6_rotation']) : '-90';
+                                $mapping_data['settings']['effect6_x_percent'] = isset($settings['effect6_x_percent']) ? $this->sanitize_offset($settings['effect6_x_percent']) : '-5';
+                                $mapping_data['settings']['effect6_origin_x'] = isset($settings['effect6_origin_x']) ? $this->sanitize_percent($settings['effect6_origin_x']) : '0';
+                                $mapping_data['settings']['effect6_origin_y'] = isset($settings['effect6_origin_y']) ? $this->sanitize_percent($settings['effect6_origin_y']) : '100';
+                                break;
+                            case '7': // Move Away
+                                $mapping_data['settings']['effect7_move_distance'] = isset($settings['effect7_move_distance']) ? $this->sanitize_move_away($settings['effect7_move_distance']) : '';
+                                break;
+                            // Effect 3 (Slide Text) uses only global settings
+                        }
+                    }
+                    
+                    $sanitized[] = $mapping_data;
                 }
             }
         }
@@ -569,20 +638,9 @@ class Context_Aware_Animation {
     }
     
     /**
-     * Enqueue scripts and styles
+     * Build the settings array for JavaScript
      */
-    public function enqueue_scripts() {
-        // Only enqueue on frontend
-        if (is_admin()) {
-            return;
-        }
-        
-        // Check if plugin should load based on filtering settings
-        if (!$this->should_load_plugin()) {
-            return;
-        }
-        
-        // Get settings
+    private function build_settings_array() {
         $logo_id = get_option('caa_logo_id', '');
         $selected_effect = get_option('caa_selected_effect', '1');
         $included_elements = get_option('caa_included_elements', '');
@@ -596,96 +654,66 @@ class Context_Aware_Animation {
         $offset_start = get_option('caa_offset_start', '30');
         $offset_end = get_option('caa_offset_end', '10');
         
-        // Don't enqueue if no logo ID is set
-        if (empty($logo_id)) {
-            return;
-        }
-        
-        // Check if text splitting is needed (effects 4 and 5) - also check mapped effects
-        $effect_mappings = get_option('caa_pro_effect_mappings', array());
-        $all_effects_used = array($selected_effect);
-        foreach ($effect_mappings as $mapping) {
-            if (!empty($mapping['effect'])) {
-                $all_effects_used[] = $mapping['effect'];
-            }
-        }
-        $needs_text_splitting = count(array_intersect($all_effects_used, array('4', '5'))) > 0;
-        
-        // Enqueue GSAP from local assets
-        wp_enqueue_script(
-            'gsap',
-            CAA_PLUGIN_URL . 'assets/js/gsap.min.js',
-            array(),
-            '3.12.5',
-            true
-        );
-        
-        wp_enqueue_script(
-            'gsap-scrolltrigger',
-            CAA_PLUGIN_URL . 'assets/js/ScrollTrigger.min.js',
-            array('gsap'),
-            '3.12.5',
-            true
-        );
-        
-        // Only enqueue SplitType and textSplitter for effects 4 and 5
-        $frontend_dependencies = array('gsap', 'gsap-scrolltrigger');
-        
-        if ($needs_text_splitting) {
-            // Enqueue SplitType from local assets - load in HEAD to ensure it's available before modules
-            // ES modules execute after DOMContentLoaded, so head scripts will be ready
-            wp_enqueue_script(
-                'split-type',
-                CAA_PLUGIN_URL . 'assets/js/splittype.js',
-                array(),
-                '0.3.4',
-                false // Load in <head>, not footer
+        // Get Pro Version effect mappings and convert keys to camelCase for JS
+        $effect_mappings_raw = get_option('caa_pro_effect_mappings', array());
+        $effect_mappings = array();
+        foreach ($effect_mappings_raw as $mapping) {
+            $js_mapping = array(
+                'selector' => isset($mapping['selector']) ? $mapping['selector'] : '',
+                'effect' => isset($mapping['effect']) ? $mapping['effect'] : '1',
+                'overrideEnabled' => isset($mapping['override_enabled']) && $mapping['override_enabled']
             );
             
-            // Ensure SplitType script has no defer/async (some themes add these)
-            add_filter('script_loader_tag', function($tag, $handle) {
-                if ($handle === 'split-type') {
-                    // Remove any defer or async attributes
-                    $tag = preg_replace('/\s+(defer|async)(=[\'"][^\'"]*[\'"])?/i', '', $tag);
+            // Convert settings to camelCase if override is enabled
+            if ($js_mapping['overrideEnabled'] && isset($mapping['settings']) && is_array($mapping['settings'])) {
+                $settings = $mapping['settings'];
+                $js_mapping['settings'] = array(
+                    // Global animation settings
+                    'duration' => isset($settings['duration']) ? $settings['duration'] : '0.6',
+                    'ease' => isset($settings['ease']) ? $settings['ease'] : 'power4',
+                    'offsetStart' => isset($settings['offset_start']) ? $settings['offset_start'] : '30',
+                    'offsetEnd' => isset($settings['offset_end']) ? $settings['offset_end'] : '10',
+                );
+                
+                // Effect-specific settings (camelCase)
+                $effect = $js_mapping['effect'];
+                switch ($effect) {
+                    case '1':
+                        $js_mapping['settings']['effect1ScaleDown'] = isset($settings['effect1_scale_down']) ? $settings['effect1_scale_down'] : '0';
+                        $js_mapping['settings']['effect1OriginX'] = isset($settings['effect1_origin_x']) ? $settings['effect1_origin_x'] : '0';
+                        $js_mapping['settings']['effect1OriginY'] = isset($settings['effect1_origin_y']) ? $settings['effect1_origin_y'] : '50';
+                        break;
+                    case '2':
+                        $js_mapping['settings']['effect2BlurAmount'] = isset($settings['effect2_blur_amount']) ? $settings['effect2_blur_amount'] : '5';
+                        $js_mapping['settings']['effect2BlurScale'] = isset($settings['effect2_blur_scale']) ? $settings['effect2_blur_scale'] : '0.9';
+                        $js_mapping['settings']['effect2BlurDuration'] = isset($settings['effect2_blur_duration']) ? $settings['effect2_blur_duration'] : '0.2';
+                        break;
+                    case '4':
+                        $js_mapping['settings']['effect4TextXRange'] = isset($settings['effect4_text_x_range']) ? $settings['effect4_text_x_range'] : '50';
+                        $js_mapping['settings']['effect4TextYRange'] = isset($settings['effect4_text_y_range']) ? $settings['effect4_text_y_range'] : '40';
+                        $js_mapping['settings']['effect4StaggerAmount'] = isset($settings['effect4_stagger_amount']) ? $settings['effect4_stagger_amount'] : '0.03';
+                        break;
+                    case '5':
+                        $js_mapping['settings']['effect5ShuffleIterations'] = isset($settings['effect5_shuffle_iterations']) ? $settings['effect5_shuffle_iterations'] : '2';
+                        $js_mapping['settings']['effect5ShuffleDuration'] = isset($settings['effect5_shuffle_duration']) ? $settings['effect5_shuffle_duration'] : '0.03';
+                        $js_mapping['settings']['effect5CharDelay'] = isset($settings['effect5_char_delay']) ? $settings['effect5_char_delay'] : '0.03';
+                        break;
+                    case '6':
+                        $js_mapping['settings']['effect6Rotation'] = isset($settings['effect6_rotation']) ? $settings['effect6_rotation'] : '-90';
+                        $js_mapping['settings']['effect6XPercent'] = isset($settings['effect6_x_percent']) ? $settings['effect6_x_percent'] : '-5';
+                        $js_mapping['settings']['effect6OriginX'] = isset($settings['effect6_origin_x']) ? $settings['effect6_origin_x'] : '0';
+                        $js_mapping['settings']['effect6OriginY'] = isset($settings['effect6_origin_y']) ? $settings['effect6_origin_y'] : '100';
+                        break;
+                    case '7':
+                        $js_mapping['settings']['effect7MoveDistance'] = isset($settings['effect7_move_distance']) ? $settings['effect7_move_distance'] : '';
+                        break;
                 }
-                return $tag;
-            }, 99, 2); // High priority to run after other filters
+            }
             
-            // Enqueue utility scripts - ensure split-type loads first
-            wp_enqueue_script(
-                'caa-utils',
-                CAA_PLUGIN_URL . 'assets/js/utils.js',
-                array(),
-                CAA_VERSION,
-                true
-            );
-            
-            wp_enqueue_script(
-                'caa-text-splitter',
-                CAA_PLUGIN_URL . 'assets/js/textSplitter.js',
-                array('split-type', 'caa-utils'),
-                CAA_VERSION,
-                true
-            );
-            
-            $frontend_dependencies[] = 'split-type';
-            $frontend_dependencies[] = 'caa-text-splitter';
+            $effect_mappings[] = $js_mapping;
         }
         
-        // Enqueue main frontend script
-        wp_enqueue_script(
-            'caa-frontend',
-            CAA_PLUGIN_URL . 'assets/js/frontend.js',
-            $frontend_dependencies,
-            CAA_VERSION,
-            true
-        );
-        
-        // Get Pro Version effect mappings
-        $effect_mappings = get_option('caa_pro_effect_mappings', array());
-        
-        // Build settings array with only selected effect's settings
-        // Note: wp_localize_script() handles escaping automatically - do not use esc_js()
+        // Build settings array
         $settings_array = array(
             'logoId' => $logo_id,
             'selectedEffect' => $selected_effect,
@@ -693,16 +721,14 @@ class Context_Aware_Animation {
             'excludedElements' => $excluded_elements,
             'globalOffset' => $global_offset,
             'debugMode' => $debug_mode,
-            // Global animation settings
             'duration' => $duration,
             'ease' => $ease,
             'offsetStart' => $offset_start,
             'offsetEnd' => $offset_end,
-            // Pro Version: Effect mappings
             'effectMappings' => $effect_mappings
         );
         
-        // Determine which effects are needed (selected effect + any mapped effects)
+        // Determine which effects are needed
         $needed_effects = array($selected_effect);
         foreach ($effect_mappings as $mapping) {
             if (!empty($mapping['effect']) && !in_array($mapping['effect'], $needed_effects)) {
@@ -710,7 +736,7 @@ class Context_Aware_Animation {
             }
         }
         
-        // Add all effect settings that are needed (for mapped effects to work)
+        // Add all effect settings that are needed
         foreach ($needed_effects as $effect) {
             switch ($effect) {
                 case '1':
@@ -754,20 +780,202 @@ class Context_Aware_Animation {
                         $settings_array['effect7MoveDistance'] = get_option('caa_effect7_move_distance', '');
                     }
                     break;
-                // Effect 3 doesn't need additional settings
             }
         }
         
-        // Pass settings to JavaScript
-        wp_localize_script('caa-frontend', 'caaSettings', $settings_array);
+        return $settings_array;
+    }
+    
+    /**
+     * Check if text splitting effects are needed
+     */
+    private function needs_text_splitting() {
+        $selected_effect = get_option('caa_selected_effect', '1');
+        $effect_mappings = get_option('caa_pro_effect_mappings', array());
+        $all_effects_used = array($selected_effect);
+        foreach ($effect_mappings as $mapping) {
+            if (!empty($mapping['effect'])) {
+                $all_effects_used[] = $mapping['effect'];
+            }
+        }
+        return count(array_intersect($all_effects_used, array('4', '5'))) > 0;
+    }
+    
+    /**
+     * Enqueue scripts and styles
+     */
+    public function enqueue_scripts() {
+        // Only enqueue on frontend
+        if (is_admin()) {
+            return;
+        }
         
-        // Enqueue frontend CSS if needed
+        // Check if plugin should load based on filtering settings
+        if (!$this->should_load_plugin()) {
+            return;
+        }
+        
+        // Don't enqueue if no logo ID is set
+        $logo_id = get_option('caa_logo_id', '');
+        if (empty($logo_id)) {
+            return;
+        }
+        
+        // Check mobile breakpoint setting
+        $mobile_breakpoint = intval(get_option('caa_mobile_breakpoint', '0'));
+        
+        // If mobile breakpoint is set, use dynamic loader approach
+        if ($mobile_breakpoint > 0) {
+            $this->enqueue_with_viewport_check($mobile_breakpoint);
+            return;
+        }
+        
+        // Standard enqueue (no viewport check)
+        $this->enqueue_scripts_standard();
+    }
+    
+    /**
+     * Standard script enqueue without viewport check
+     */
+    private function enqueue_scripts_standard() {
+        $needs_text_splitting = $this->needs_text_splitting();
+        
+        // Enqueue GSAP from local assets
+        wp_enqueue_script(
+            'gsap',
+            CAA_PLUGIN_URL . 'assets/js/gsap.min.js',
+            array(),
+            '3.12.5',
+            true
+        );
+        
+        wp_enqueue_script(
+            'gsap-scrolltrigger',
+            CAA_PLUGIN_URL . 'assets/js/ScrollTrigger.min.js',
+            array('gsap'),
+            '3.12.5',
+            true
+        );
+        
+        // Only enqueue SplitType and textSplitter for effects 4 and 5
+        $frontend_dependencies = array('gsap', 'gsap-scrolltrigger');
+        
+        if ($needs_text_splitting) {
+            // Enqueue SplitType from local assets - load in HEAD to ensure it's available before modules
+            wp_enqueue_script(
+                'split-type',
+                CAA_PLUGIN_URL . 'assets/js/splittype.js',
+                array(),
+                '0.3.4',
+                false // Load in <head>, not footer
+            );
+            
+            // Ensure SplitType script has no defer/async (some themes add these)
+            add_filter('script_loader_tag', function($tag, $handle) {
+                if ($handle === 'split-type') {
+                    $tag = preg_replace('/\s+(defer|async)(=[\'"][^\'"]*[\'"])?/i', '', $tag);
+                }
+                return $tag;
+            }, 99, 2);
+            
+            // Enqueue utility scripts
+            wp_enqueue_script(
+                'caa-utils',
+                CAA_PLUGIN_URL . 'assets/js/utils.js',
+                array(),
+                CAA_VERSION,
+                true
+            );
+            
+            wp_enqueue_script(
+                'caa-text-splitter',
+                CAA_PLUGIN_URL . 'assets/js/textSplitter.js',
+                array('split-type', 'caa-utils'),
+                CAA_VERSION,
+                true
+            );
+            
+            $frontend_dependencies[] = 'split-type';
+            $frontend_dependencies[] = 'caa-text-splitter';
+        }
+        
+        // Enqueue main frontend script
+        wp_enqueue_script(
+            'caa-frontend',
+            CAA_PLUGIN_URL . 'assets/js/frontend.js',
+            $frontend_dependencies,
+            CAA_VERSION,
+            true
+        );
+        
+        // Pass settings to JavaScript
+        wp_localize_script('caa-frontend', 'caaSettings', $this->build_settings_array());
+        
+        // Enqueue frontend CSS
         wp_enqueue_style(
             'caa-frontend',
             CAA_PLUGIN_URL . 'assets/css/frontend.css',
             array(),
             CAA_VERSION
         );
+    }
+    
+    /**
+     * Enqueue scripts with viewport check - only loads files if viewport is large enough
+     * No resize listener - viewport is checked once on page load for maximum performance
+     */
+    private function enqueue_with_viewport_check($breakpoint) {
+        $needs_text_splitting = $this->needs_text_splitting();
+        $settings_array = $this->build_settings_array();
+        
+        // Build script URLs
+        $scripts = array(
+            'gsap' => CAA_PLUGIN_URL . 'assets/js/gsap.min.js',
+            'scrolltrigger' => CAA_PLUGIN_URL . 'assets/js/ScrollTrigger.min.js',
+        );
+        
+        if ($needs_text_splitting) {
+            $scripts['splittype'] = CAA_PLUGIN_URL . 'assets/js/splittype.js';
+            $scripts['utils'] = CAA_PLUGIN_URL . 'assets/js/utils.js';
+            $scripts['textsplitter'] = CAA_PLUGIN_URL . 'assets/js/textSplitter.js';
+        }
+        
+        $scripts['frontend'] = CAA_PLUGIN_URL . 'assets/js/frontend.js';
+        
+        // CSS URL
+        $css_url = CAA_PLUGIN_URL . 'assets/css/frontend.css';
+        
+        // Output inline loader script
+        add_action('wp_head', function() use ($breakpoint, $scripts, $css_url, $settings_array, $needs_text_splitting) {
+            $scripts_json = wp_json_encode($scripts);
+            $settings_json = wp_json_encode($settings_array);
+            $needs_text_splitting_js = $needs_text_splitting ? 'true' : 'false';
+            
+            // Minified loader script - checks viewport once, no resize listener
+            echo '<script id="caa-viewport-loader">';
+            echo '(function(){';
+            echo 'if(window.innerWidth<' . intval($breakpoint) . ')return;';
+            echo 'var s=' . $scripts_json . ',';
+            echo 'c="' . esc_url($css_url) . '",';
+            echo 'n=' . $needs_text_splitting_js . ',';
+            echo 'l=function(u,cb,m){var e=document.createElement("script");e.src=u;if(m)e.type="module";e.onload=cb;document.body.appendChild(e);},';
+            echo 'lc=function(){var e=document.createElement("link");e.rel="stylesheet";e.href=c;document.head.appendChild(e);};';
+            echo 'window.caaSettings=' . $settings_json . ';';
+            echo 'lc();';
+            echo 'l(s.gsap,function(){';
+            echo 'l(s.scrolltrigger,function(){';
+            echo 'if(n){';
+            echo 'var st=document.createElement("script");st.src=s.splittype;document.head.appendChild(st);';
+            echo 'st.onload=function(){';
+            echo 'l(s.utils,function(){';
+            echo 'l(s.textsplitter,function(){';
+            echo 'l(s.frontend,null,true);';
+            echo '});});};';
+            echo '}else{l(s.frontend,null,true);}';
+            echo '});});';
+            echo '})();';
+            echo '</script>';
+        }, 1); // Priority 1 to run early in head
     }
 }
 
