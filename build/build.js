@@ -171,7 +171,9 @@ function removeDir(dir) {
 }
 
 /**
- * Create ZIP using PowerShell (Windows)
+ * Create ZIP using platform-appropriate command
+ * - Linux/Mac: zip command
+ * - Windows: PowerShell Compress-Archive
  */
 function createZip(sourceDir, zipPath, folderName) {
     // Remove existing zip
@@ -179,15 +181,25 @@ function createZip(sourceDir, zipPath, folderName) {
         fs.unlinkSync(zipPath);
     }
 
-    const parentDir = path.dirname(sourceDir);
+    const isWindows = process.platform === 'win32';
     const sourceName = path.basename(sourceDir);
+    const parentDir = path.dirname(sourceDir);
 
-    // Use PowerShell Compress-Archive
     try {
-        execSync(
-            `powershell -Command "Compress-Archive -Path '${sourceDir}' -DestinationPath '${zipPath}' -Force"`,
-            { stdio: 'pipe' }
-        );
+        if (isWindows) {
+            // Windows: Use PowerShell Compress-Archive
+            execSync(
+                `powershell -Command "Compress-Archive -Path '${sourceDir}' -DestinationPath '${zipPath}' -Force"`,
+                { stdio: 'pipe' }
+            );
+        } else {
+            // Linux/Mac: Use zip command
+            // cd to parent directory so the zip contains 'logo-collision/' folder structure
+            execSync(
+                `cd "${parentDir}" && zip -r "${zipPath}" "${sourceName}"`,
+                { stdio: 'pipe', shell: '/bin/sh' }
+            );
+        }
 
         const stats = fs.statSync(zipPath);
         console.log(`  Created: ${path.basename(zipPath)} (${(stats.size / 1024).toFixed(1)} KB)`);
