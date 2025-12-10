@@ -33,7 +33,7 @@ Context-Aware Animation is a WordPress plugin that automatically detects when yo
 
 == Installation ==
 
-1. Upload the `context-aware-animation` folder to the `/wp-content/plugins/` directory
+1. Upload the `logo-collision` folder to the `/wp-content/plugins/` directory
 2. Activate the plugin through the 'Plugins' menu in WordPress
 3. Go to Settings > Context-Aware Animation to configure the plugin
 4. Enter your header logo CSS selector (e.g., `#site-logo` or `.logo`)
