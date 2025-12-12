@@ -287,6 +287,9 @@ if (isset($_POST['caa_save_instance']) && check_admin_referer('caa_instance_nonc
     }
     
     if ($instance_id > 0) {
+        // Get existing instance data to preserve fields not in this form submission
+        $existing_instance = !$is_new ? $plugin_instance->get_logo_instance($instance_id) : null;
+        
         // Build instance data from POST
         $instance_data = array(
             'enabled' => isset($_POST['caa_instance_enabled']),
@@ -327,15 +330,15 @@ if (isset($_POST['caa_save_instance']) && check_admin_referer('caa_instance_nonc
             'effect6_origin_x' => isset($_POST['caa_instance_effect6_origin_x']) ? caa_sanitize_percent(sanitize_text_field(wp_unslash($_POST['caa_instance_effect6_origin_x']))) : '0',
             'effect6_origin_y' => isset($_POST['caa_instance_effect6_origin_y']) ? caa_sanitize_percent(sanitize_text_field(wp_unslash($_POST['caa_instance_effect6_origin_y']))) : '100',
             'effect7_move_distance' => isset($_POST['caa_instance_effect7_move_distance']) ? caa_sanitize_move_away(sanitize_text_field(wp_unslash($_POST['caa_instance_effect7_move_distance']))) : '',
-            // Pro features per instance - effect mappings
-            'effect_mappings' => array(),
-            // Filtering settings
-            'enable_filtering' => isset($_POST['caa_instance_enable_filtering']) ? '1' : '0',
-            'filter_mode' => isset($_POST['caa_instance_filter_mode']) ? sanitize_text_field(wp_unslash($_POST['caa_instance_filter_mode'])) : 'include',
-            'selected_post_types' => array(),
-            'include_pages' => isset($_POST['caa_instance_include_pages']) ? '1' : '0',
-            'include_posts' => isset($_POST['caa_instance_include_posts']) ? '1' : '0',
-            'selected_items' => array(),
+            // Pro features per instance - effect mappings (preserve existing if not in form)
+            'effect_mappings' => ($existing_instance && !isset($_POST['caa_instance_mappings'])) ? (isset($existing_instance['effect_mappings']) ? $existing_instance['effect_mappings'] : array()) : array(),
+            // Filtering settings (preserve existing if filtering form not submitted)
+            'enable_filtering' => ($existing_instance && !isset($_POST['caa_instance_filter_mode'])) ? (isset($existing_instance['enable_filtering']) ? $existing_instance['enable_filtering'] : '0') : (isset($_POST['caa_instance_enable_filtering']) ? '1' : '0'),
+            'filter_mode' => ($existing_instance && !isset($_POST['caa_instance_filter_mode'])) ? (isset($existing_instance['filter_mode']) ? $existing_instance['filter_mode'] : 'include') : (isset($_POST['caa_instance_filter_mode']) ? sanitize_text_field(wp_unslash($_POST['caa_instance_filter_mode'])) : 'include'),
+            'selected_post_types' => ($existing_instance && !isset($_POST['caa_instance_post_types'])) ? (isset($existing_instance['selected_post_types']) ? $existing_instance['selected_post_types'] : array()) : array(),
+            'include_pages' => ($existing_instance && !isset($_POST['caa_instance_filter_mode'])) ? (isset($existing_instance['include_pages']) ? $existing_instance['include_pages'] : '0') : (isset($_POST['caa_instance_include_pages']) ? '1' : '0'),
+            'include_posts' => ($existing_instance && !isset($_POST['caa_instance_filter_mode'])) ? (isset($existing_instance['include_posts']) ? $existing_instance['include_posts'] : '0') : (isset($_POST['caa_instance_include_posts']) ? '1' : '0'),
+            'selected_items' => ($existing_instance && !isset($_POST['caa_instance_selected_items'])) ? (isset($existing_instance['selected_items']) ? $existing_instance['selected_items'] : array()) : array(),
         );
         
         // Handle effect mappings for this instance

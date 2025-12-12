@@ -3,8 +3,8 @@ Contributors: wpmitch - exzent.de
 Tags: animation, scroll, gsap, header, logo, responsive
 Requires at least: 5.0
 Tested up to: 6.9
-Stable tag: 1.1.0
-Version: 1.1.0
+Stable tag: 1.1.1
+Version: 1.1.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -92,6 +92,10 @@ No, this plugin does not slow down your theme. The required libraries (GSAP and 
 2. Animation in action
 
 == Changelog ==
+
+= 1.1.1 =
+* FIXED: Saving Pro Settings General tab no longer wipes Element Mappings and Page Filtering data
+* FIXED: Saving from any Pro Settings sub-tab now correctly preserves data from other tabs
 
 = 1.1.0 =
 * NEW: Responsive Viewport Settings (Pro) - Configure separate animation settings for Desktop, Tablet, and Mobile
