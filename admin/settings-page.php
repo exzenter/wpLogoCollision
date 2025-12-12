@@ -300,6 +300,15 @@ if (isset($_POST['caa_save_instance']) && check_admin_referer('caa_instance_nonc
             'ease' => isset($_POST['caa_instance_ease']) ? caa_sanitize_ease(sanitize_text_field(wp_unslash($_POST['caa_instance_ease']))) : 'power4',
             'offset_start' => isset($_POST['caa_instance_offset_start']) ? caa_sanitize_offset(sanitize_text_field(wp_unslash($_POST['caa_instance_offset_start']))) : '30',
             'offset_end' => isset($_POST['caa_instance_offset_end']) ? caa_sanitize_offset(sanitize_text_field(wp_unslash($_POST['caa_instance_offset_end']))) : '10',
+            // Viewport-specific animation settings (empty = inherit)
+            'duration_tablet' => isset($_POST['caa_instance_duration_tablet']) ? $plugin_instance->sanitize_viewport_value(sanitize_text_field(wp_unslash($_POST['caa_instance_duration_tablet'])), 'float') : '',
+            'duration_mobile' => isset($_POST['caa_instance_duration_mobile']) ? $plugin_instance->sanitize_viewport_value(sanitize_text_field(wp_unslash($_POST['caa_instance_duration_mobile'])), 'float') : '',
+            'ease_tablet' => isset($_POST['caa_instance_ease_tablet']) ? $plugin_instance->sanitize_viewport_value(sanitize_text_field(wp_unslash($_POST['caa_instance_ease_tablet'])), 'ease') : '',
+            'ease_mobile' => isset($_POST['caa_instance_ease_mobile']) ? $plugin_instance->sanitize_viewport_value(sanitize_text_field(wp_unslash($_POST['caa_instance_ease_mobile'])), 'ease') : '',
+            'offset_start_tablet' => isset($_POST['caa_instance_offset_start_tablet']) ? $plugin_instance->sanitize_viewport_value(sanitize_text_field(wp_unslash($_POST['caa_instance_offset_start_tablet'])), 'offset') : '',
+            'offset_start_mobile' => isset($_POST['caa_instance_offset_start_mobile']) ? $plugin_instance->sanitize_viewport_value(sanitize_text_field(wp_unslash($_POST['caa_instance_offset_start_mobile'])), 'offset') : '',
+            'offset_end_tablet' => isset($_POST['caa_instance_offset_end_tablet']) ? $plugin_instance->sanitize_viewport_value(sanitize_text_field(wp_unslash($_POST['caa_instance_offset_end_tablet'])), 'offset') : '',
+            'offset_end_mobile' => isset($_POST['caa_instance_offset_end_mobile']) ? $plugin_instance->sanitize_viewport_value(sanitize_text_field(wp_unslash($_POST['caa_instance_offset_end_mobile'])), 'offset') : '',
             // Effect settings
             'effect1_scale_down' => isset($_POST['caa_instance_effect1_scale_down']) ? caa_sanitize_float(sanitize_text_field(wp_unslash($_POST['caa_instance_effect1_scale_down']))) : '0',
             'effect1_origin_x' => isset($_POST['caa_instance_effect1_origin_x']) ? caa_sanitize_percent(sanitize_text_field(wp_unslash($_POST['caa_instance_effect1_origin_x']))) : '0',
@@ -318,32 +327,16 @@ if (isset($_POST['caa_save_instance']) && check_admin_referer('caa_instance_nonc
             'effect6_origin_x' => isset($_POST['caa_instance_effect6_origin_x']) ? caa_sanitize_percent(sanitize_text_field(wp_unslash($_POST['caa_instance_effect6_origin_x']))) : '0',
             'effect6_origin_y' => isset($_POST['caa_instance_effect6_origin_y']) ? caa_sanitize_percent(sanitize_text_field(wp_unslash($_POST['caa_instance_effect6_origin_y']))) : '100',
             'effect7_move_distance' => isset($_POST['caa_instance_effect7_move_distance']) ? caa_sanitize_move_away(sanitize_text_field(wp_unslash($_POST['caa_instance_effect7_move_distance']))) : '',
-            // Event target selector for cah-pause/cah-resume events
-            'event_target_selector' => isset($_POST['caa_instance_event_target']) ? sanitize_text_field(wp_unslash($_POST['caa_instance_event_target'])) : '',
+            // Pro features per instance - effect mappings
+            'effect_mappings' => array(),
+            // Filtering settings
+            'enable_filtering' => isset($_POST['caa_instance_enable_filtering']) ? '1' : '0',
+            'filter_mode' => isset($_POST['caa_instance_filter_mode']) ? sanitize_text_field(wp_unslash($_POST['caa_instance_filter_mode'])) : 'include',
+            'selected_post_types' => array(),
+            'include_pages' => isset($_POST['caa_instance_include_pages']) ? '1' : '0',
+            'include_posts' => isset($_POST['caa_instance_include_posts']) ? '1' : '0',
+            'selected_items' => array(),
         );
-        
-        // Preserve existing data for fields that may not be in the current POST
-        // This prevents losing data when saving from different sub-tabs
-        $existing_instance = $plugin_instance->get_logo_instance($instance_id);
-        if ($existing_instance) {
-            // Preserve effect mappings
-            $instance_data['effect_mappings'] = isset($existing_instance['effect_mappings']) ? $existing_instance['effect_mappings'] : array();
-            // Preserve filtering settings
-            $instance_data['enable_filtering'] = isset($existing_instance['enable_filtering']) ? $existing_instance['enable_filtering'] : '0';
-            $instance_data['filter_mode'] = isset($existing_instance['filter_mode']) ? $existing_instance['filter_mode'] : 'include';
-            $instance_data['selected_post_types'] = isset($existing_instance['selected_post_types']) ? $existing_instance['selected_post_types'] : array();
-            $instance_data['include_pages'] = isset($existing_instance['include_pages']) ? $existing_instance['include_pages'] : '0';
-            $instance_data['include_posts'] = isset($existing_instance['include_posts']) ? $existing_instance['include_posts'] : '0';
-            $instance_data['selected_items'] = isset($existing_instance['selected_items']) ? $existing_instance['selected_items'] : array();
-        } else {
-            $instance_data['effect_mappings'] = array();
-            $instance_data['enable_filtering'] = '0';
-            $instance_data['filter_mode'] = 'include';
-            $instance_data['selected_post_types'] = array();
-            $instance_data['include_pages'] = '0';
-            $instance_data['include_posts'] = '0';
-            $instance_data['selected_items'] = array();
-        }
         
         // Handle effect mappings for this instance
         if (isset($_POST['caa_instance_mappings']) && is_array($_POST['caa_instance_mappings'])) {
@@ -488,7 +481,10 @@ if (isset($_POST['caa_save_settings']) && check_admin_referer('caa_settings_nonc
     
     // Mobile disable settings
     update_option('caa_disable_mobile', isset($_POST['caa_disable_mobile']) ? '1' : '0');
-    update_option('caa_mobile_breakpoint', isset($_POST['caa_mobile_breakpoint']) ? absint(wp_unslash($_POST['caa_mobile_breakpoint'])) : '768');
+    
+    // Viewport breakpoints (global settings)
+    update_option('caa_tablet_breakpoint', isset($_POST['caa_tablet_breakpoint']) ? absint(wp_unslash($_POST['caa_tablet_breakpoint'])) : '782');
+    update_option('caa_mobile_breakpoint', isset($_POST['caa_mobile_breakpoint']) ? absint(wp_unslash($_POST['caa_mobile_breakpoint'])) : '600');
     
     // Global animation settings
     update_option('caa_duration', isset($_POST['caa_duration']) ? caa_sanitize_float(sanitize_text_field(wp_unslash($_POST['caa_duration']))) : '0.6');
@@ -576,7 +572,10 @@ $debug_mode = isset($instance_1['debug_mode']) ? $instance_1['debug_mode'] : '0'
 
 // Get mobile disable settings (these remain global - apply to all instances)
 $disable_mobile = get_option('caa_disable_mobile', '0');
-$mobile_breakpoint = get_option('caa_mobile_breakpoint', '768');
+
+// Get viewport breakpoints (global settings)
+$tablet_breakpoint = get_option('caa_tablet_breakpoint', '782');
+$mobile_breakpoint = get_option('caa_mobile_breakpoint', '600');
 
 // Get animation settings from Instance 1
 $duration = isset($instance_1['duration']) ? $instance_1['duration'] : '0.6';
@@ -1394,6 +1393,61 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                     </td>
                 </tr>
                 
+                <tr>
+                    <th scope="row">
+                        <label><?php esc_html_e('Viewport Breakpoints', 'logo-collision'); ?></label>
+                    </th>
+                    <td>
+                        <table class="form-table" style="margin-top: 0;">
+                            <tr>
+                                <th scope="row" style="width: 200px;">
+                                    <label for="caa_tablet_breakpoint"><?php esc_html_e('Tablet Breakpoint', 'logo-collision'); ?></label>
+                                </th>
+                                <td>
+                                    <input 
+                                        type="number" 
+                                        id="caa_tablet_breakpoint" 
+                                        name="caa_tablet_breakpoint" 
+                                        value="<?php echo esc_attr($tablet_breakpoint); ?>" 
+                                        class="small-text"
+                                        min="320"
+                                        max="1200"
+                                        step="1"
+                                    />
+                                    <span>px</span>
+                                    <p class="description">
+                                        <?php esc_html_e('Viewport width at or below which tablet settings are applied (default: 782px).', 'logo-collision'); ?>
+                                    </p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">
+                                    <label for="caa_mobile_breakpoint"><?php esc_html_e('Mobile Breakpoint', 'logo-collision'); ?></label>
+                                </th>
+                                <td>
+                                    <input 
+                                        type="number" 
+                                        id="caa_mobile_breakpoint" 
+                                        name="caa_mobile_breakpoint" 
+                                        value="<?php echo esc_attr($mobile_breakpoint); ?>" 
+                                        class="small-text"
+                                        min="320"
+                                        max="1200"
+                                        step="1"
+                                    />
+                                    <span>px</span>
+                                    <p class="description">
+                                        <?php esc_html_e('Viewport width at or below which mobile settings are applied (default: 600px).', 'logo-collision'); ?>
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                        <p class="description" style="margin-top: 10px; padding: 10px; background: #f0f0f1; border-left: 4px solid #2271b1;">
+                            <?php esc_html_e('These breakpoints are used for viewport-responsive animation settings in the Pro Version tab. Desktop settings apply for viewports above the tablet breakpoint.', 'logo-collision'); ?>
+                        </p>
+                    </td>
+                </tr>
+                
             </tbody>
         </table>
         
@@ -1584,16 +1638,6 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                             </tr>
                             <tr>
                                 <th scope="row">
-                                    <label for="caa_instance_event_target"><?php esc_html_e('Event Target Selector', 'logo-collision'); ?></label>
-                                </th>
-                                <td>
-                                    <?php $event_target = isset($selected_instance['event_target_selector']) ? $selected_instance['event_target_selector'] : ''; ?>
-                                    <input type="text" id="caa_instance_event_target" name="caa_instance_event_target" value="<?php echo esc_attr($event_target); ?>" class="regular-text" placeholder=".site-header (optional)" />
-                                    <p class="description"><?php esc_html_e('CSS selector for element to receive cah-pause/cah-resume events. Leave empty to use the logo element. Only fires for effects 1, 4, 5, 6.', 'logo-collision'); ?></p>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th scope="row">
                                     <label><?php esc_html_e('Default Effect', 'logo-collision'); ?></label>
                                 </th>
                                 <td>
@@ -1633,37 +1677,152 @@ wp_localize_script('caa-admin', 'caaAdmin', array(
                     </table>
                     
                     <h3><?php esc_html_e('Animation Settings', 'logo-collision'); ?></h3>
+                    
+                    <!-- Viewport Switcher -->
+                    <div class="caa-viewport-switcher">
+                        <label class="caa-viewport-label"><?php esc_html_e('Configure for:', 'logo-collision'); ?></label>
+                        <div class="caa-viewport-buttons">
+                            <label class="caa-viewport-btn caa-viewport-active" data-viewport="desktop">
+                                <input type="radio" name="caa_viewport_mode" value="desktop" checked />
+                                <span class="dashicons dashicons-desktop"></span>
+                                <?php esc_html_e('Desktop', 'logo-collision'); ?>
+                            </label>
+                            <label class="caa-viewport-btn" data-viewport="tablet">
+                                <input type="radio" name="caa_viewport_mode" value="tablet" />
+                                <span class="dashicons dashicons-tablet"></span>
+                                <?php esc_html_e('Tablet', 'logo-collision'); ?>
+                            </label>
+                            <label class="caa-viewport-btn" data-viewport="mobile">
+                                <input type="radio" name="caa_viewport_mode" value="mobile" />
+                                <span class="dashicons dashicons-smartphone"></span>
+                                <?php esc_html_e('Mobile', 'logo-collision'); ?>
+                            </label>
+                        </div>
+                        <p class="caa-viewport-info">
+                            <?php 
+                            /* translators: 1: tablet breakpoint, 2: mobile breakpoint */
+                            printf(
+                                esc_html__('Tablet: ≤%1$dpx | Mobile: ≤%2$dpx. Empty values inherit from the larger viewport.', 'logo-collision'),
+                                intval($tablet_breakpoint),
+                                intval($mobile_breakpoint)
+                            ); 
+                            ?>
+                        </p>
+                    </div>
+                    
+                    <?php
+                    // Get viewport values
+                    $duration_tablet = isset($selected_instance['duration_tablet']) ? $selected_instance['duration_tablet'] : '';
+                    $duration_mobile = isset($selected_instance['duration_mobile']) ? $selected_instance['duration_mobile'] : '';
+                    $ease_tablet = isset($selected_instance['ease_tablet']) ? $selected_instance['ease_tablet'] : '';
+                    $ease_mobile = isset($selected_instance['ease_mobile']) ? $selected_instance['ease_mobile'] : '';
+                    $offset_start_tablet = isset($selected_instance['offset_start_tablet']) ? $selected_instance['offset_start_tablet'] : '';
+                    $offset_start_mobile = isset($selected_instance['offset_start_mobile']) ? $selected_instance['offset_start_mobile'] : '';
+                    $offset_end_tablet = isset($selected_instance['offset_end_tablet']) ? $selected_instance['offset_end_tablet'] : '';
+                    $offset_end_mobile = isset($selected_instance['offset_end_mobile']) ? $selected_instance['offset_end_mobile'] : '';
+                    ?>
+                    
                     <table class="form-table" role="presentation">
                         <tbody>
-                            <tr>
-                                <th scope="row"><label for="caa_instance_duration"><?php esc_html_e('Duration', 'logo-collision'); ?></label></th>
+                            <!-- Duration -->
+                            <tr class="caa-responsive-field">
+                                <th scope="row">
+                                    <label for="caa_instance_duration"><?php esc_html_e('Duration', 'logo-collision'); ?></label>
+                                    <?php if ($duration_tablet !== '' || $duration_mobile !== '') : ?>
+                                        <span class="caa-override-indicator" title="<?php esc_attr_e('Has viewport override', 'logo-collision'); ?>">●</span>
+                                    <?php endif; ?>
+                                </th>
                                 <td>
-                                    <input type="number" id="caa_instance_duration" name="caa_instance_duration" value="<?php echo esc_attr($selected_instance['duration']); ?>" min="0.1" max="15" step="0.1" class="small-text" /> s
+                                    <div class="caa-viewport-field caa-viewport-desktop caa-viewport-visible">
+                                        <input type="number" id="caa_instance_duration" name="caa_instance_duration" value="<?php echo esc_attr($selected_instance['duration']); ?>" min="0.1" max="15" step="0.1" class="small-text" /> s
+                                    </div>
+                                    <div class="caa-viewport-field caa-viewport-tablet">
+                                        <input type="number" name="caa_instance_duration_tablet" value="<?php echo esc_attr($duration_tablet); ?>" min="0.1" max="15" step="0.1" class="small-text" placeholder="<?php echo esc_attr($selected_instance['duration']); ?>" /> s
+                                        <span class="caa-inherit-label"><?php esc_html_e('(inherits from Desktop)', 'logo-collision'); ?></span>
+                                    </div>
+                                    <div class="caa-viewport-field caa-viewport-mobile">
+                                        <input type="number" name="caa_instance_duration_mobile" value="<?php echo esc_attr($duration_mobile); ?>" min="0.1" max="15" step="0.1" class="small-text" placeholder="<?php echo esc_attr($duration_tablet !== '' ? $duration_tablet : $selected_instance['duration']); ?>" /> s
+                                        <span class="caa-inherit-label"><?php esc_html_e('(inherits from Tablet)', 'logo-collision'); ?></span>
+                                    </div>
                                 </td>
                             </tr>
-                            <tr>
-                                <th scope="row"><label for="caa_instance_ease"><?php esc_html_e('Easing', 'logo-collision'); ?></label></th>
+                            <!-- Easing -->
+                            <tr class="caa-responsive-field">
+                                <th scope="row">
+                                    <label for="caa_instance_ease"><?php esc_html_e('Easing', 'logo-collision'); ?></label>
+                                    <?php if ($ease_tablet !== '' || $ease_mobile !== '') : ?>
+                                        <span class="caa-override-indicator" title="<?php esc_attr_e('Has viewport override', 'logo-collision'); ?>">●</span>
+                                    <?php endif; ?>
+                                </th>
                                 <td>
-                                    <select id="caa_instance_ease" name="caa_instance_ease">
-                                        <?php
-                                        $eases = array('power1', 'power2', 'power3', 'power4', 'expo', 'sine', 'back', 'elastic', 'bounce', 'none');
-                                        foreach ($eases as $e) {
-                                            printf('<option value="%s" %s>%s</option>', esc_attr($e), selected($selected_instance['ease'], $e, false), esc_html(ucfirst($e)));
-                                        }
-                                        ?>
-                                    </select>
+                                    <?php $eases = array('power1', 'power2', 'power3', 'power4', 'expo', 'sine', 'back', 'elastic', 'bounce', 'none'); ?>
+                                    <div class="caa-viewport-field caa-viewport-desktop caa-viewport-visible">
+                                        <select id="caa_instance_ease" name="caa_instance_ease">
+                                            <?php foreach ($eases as $e) : ?>
+                                                <option value="<?php echo esc_attr($e); ?>" <?php selected($selected_instance['ease'], $e); ?>><?php echo esc_html(ucfirst($e)); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="caa-viewport-field caa-viewport-tablet">
+                                        <select name="caa_instance_ease_tablet">
+                                            <option value=""><?php esc_html_e('— Inherit —', 'logo-collision'); ?></option>
+                                            <?php foreach ($eases as $e) : ?>
+                                                <option value="<?php echo esc_attr($e); ?>" <?php selected($ease_tablet, $e); ?>><?php echo esc_html(ucfirst($e)); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="caa-viewport-field caa-viewport-mobile">
+                                        <select name="caa_instance_ease_mobile">
+                                            <option value=""><?php esc_html_e('— Inherit —', 'logo-collision'); ?></option>
+                                            <?php foreach ($eases as $e) : ?>
+                                                <option value="<?php echo esc_attr($e); ?>" <?php selected($ease_mobile, $e); ?>><?php echo esc_html(ucfirst($e)); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
                                 </td>
                             </tr>
-                            <tr>
-                                <th scope="row"><label for="caa_instance_offset_start"><?php esc_html_e('Start Offset', 'logo-collision'); ?></label></th>
+                            <!-- Start Offset -->
+                            <tr class="caa-responsive-field">
+                                <th scope="row">
+                                    <label for="caa_instance_offset_start"><?php esc_html_e('Start Offset', 'logo-collision'); ?></label>
+                                    <?php if ($offset_start_tablet !== '' || $offset_start_mobile !== '') : ?>
+                                        <span class="caa-override-indicator" title="<?php esc_attr_e('Has viewport override', 'logo-collision'); ?>">●</span>
+                                    <?php endif; ?>
+                                </th>
                                 <td>
-                                    <input type="number" id="caa_instance_offset_start" name="caa_instance_offset_start" value="<?php echo esc_attr($selected_instance['offset_start']); ?>" step="1" class="small-text" /> px
+                                    <div class="caa-viewport-field caa-viewport-desktop caa-viewport-visible">
+                                        <input type="number" id="caa_instance_offset_start" name="caa_instance_offset_start" value="<?php echo esc_attr($selected_instance['offset_start']); ?>" step="1" class="small-text" /> px
+                                    </div>
+                                    <div class="caa-viewport-field caa-viewport-tablet">
+                                        <input type="number" name="caa_instance_offset_start_tablet" value="<?php echo esc_attr($offset_start_tablet); ?>" step="1" class="small-text" placeholder="<?php echo esc_attr($selected_instance['offset_start']); ?>" /> px
+                                        <span class="caa-inherit-label"><?php esc_html_e('(inherits from Desktop)', 'logo-collision'); ?></span>
+                                    </div>
+                                    <div class="caa-viewport-field caa-viewport-mobile">
+                                        <input type="number" name="caa_instance_offset_start_mobile" value="<?php echo esc_attr($offset_start_mobile); ?>" step="1" class="small-text" placeholder="<?php echo esc_attr($offset_start_tablet !== '' ? $offset_start_tablet : $selected_instance['offset_start']); ?>" /> px
+                                        <span class="caa-inherit-label"><?php esc_html_e('(inherits from Tablet)', 'logo-collision'); ?></span>
+                                    </div>
                                 </td>
                             </tr>
-                            <tr>
-                                <th scope="row"><label for="caa_instance_offset_end"><?php esc_html_e('End Offset', 'logo-collision'); ?></label></th>
+                            <!-- End Offset -->
+                            <tr class="caa-responsive-field">
+                                <th scope="row">
+                                    <label for="caa_instance_offset_end"><?php esc_html_e('End Offset', 'logo-collision'); ?></label>
+                                    <?php if ($offset_end_tablet !== '' || $offset_end_mobile !== '') : ?>
+                                        <span class="caa-override-indicator" title="<?php esc_attr_e('Has viewport override', 'logo-collision'); ?>">●</span>
+                                    <?php endif; ?>
+                                </th>
                                 <td>
-                                    <input type="number" id="caa_instance_offset_end" name="caa_instance_offset_end" value="<?php echo esc_attr($selected_instance['offset_end']); ?>" step="1" class="small-text" /> px
+                                    <div class="caa-viewport-field caa-viewport-desktop caa-viewport-visible">
+                                        <input type="number" id="caa_instance_offset_end" name="caa_instance_offset_end" value="<?php echo esc_attr($selected_instance['offset_end']); ?>" step="1" class="small-text" /> px
+                                    </div>
+                                    <div class="caa-viewport-field caa-viewport-tablet">
+                                        <input type="number" name="caa_instance_offset_end_tablet" value="<?php echo esc_attr($offset_end_tablet); ?>" step="1" class="small-text" placeholder="<?php echo esc_attr($selected_instance['offset_end']); ?>" /> px
+                                        <span class="caa-inherit-label"><?php esc_html_e('(inherits from Desktop)', 'logo-collision'); ?></span>
+                                    </div>
+                                    <div class="caa-viewport-field caa-viewport-mobile">
+                                        <input type="number" name="caa_instance_offset_end_mobile" value="<?php echo esc_attr($offset_end_mobile); ?>" step="1" class="small-text" placeholder="<?php echo esc_attr($offset_end_tablet !== '' ? $offset_end_tablet : $selected_instance['offset_end']); ?>" /> px
+                                        <span class="caa-inherit-label"><?php esc_html_e('(inherits from Tablet)', 'logo-collision'); ?></span>
+                                    </div>
                                 </td>
                             </tr>
                             <tr>

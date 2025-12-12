@@ -104,6 +104,7 @@
         opacity: 0;
         transform: translateY(-10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -371,7 +372,7 @@
     border-bottom: none;
 }
 
-.caa-mapping-row-wrapper:hover > .caa-mapping-row {
+.caa-mapping-row-wrapper:hover>.caa-mapping-row {
     background: #f9f9f9;
 }
 
@@ -404,7 +405,7 @@
     transition: color 0.2s ease;
 }
 
-.caa-override-checkbox:checked + .dashicons {
+.caa-override-checkbox:checked+.dashicons {
     color: #2271b1;
 }
 
@@ -412,8 +413,8 @@
     color: #666;
 }
 
-.caa-override-checkbox:checked + .dashicons,
-.caa-override-checkbox-label:hover .caa-override-checkbox:checked + .dashicons {
+.caa-override-checkbox:checked+.dashicons,
+.caa-override-checkbox-label:hover .caa-override-checkbox:checked+.dashicons {
     color: #2271b1;
 }
 
@@ -778,7 +779,7 @@
     color: #1d2327;
 }
 
-.caa-export-import-section > .description {
+.caa-export-import-section>.description {
     margin-bottom: 20px;
     color: #646970;
 }
@@ -808,8 +809,8 @@
     color: #1d2327;
 }
 
-.caa-export-box > p,
-.caa-import-box > p {
+.caa-export-box>p,
+.caa-import-box>p {
     margin-bottom: 15px;
     color: #646970;
     font-size: 13px;
@@ -853,18 +854,167 @@
     .caa-export-import-row {
         flex-direction: column;
     }
-    
+
     .caa-export-box,
     .caa-import-box {
         min-width: 100%;
     }
-    
+
     .caa-import-file-row {
         flex-direction: column;
         align-items: stretch;
     }
-    
+
     .caa-import-file-row input[type="file"] {
         width: 100%;
     }
+}
+
+/* =========================================
+   Viewport Switcher Styles (Pro Feature)
+   ========================================= */
+
+.caa-viewport-switcher {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.caa-viewport-label {
+    font-weight: 600;
+    color: #1d2327;
+    margin-right: 5px;
+}
+
+.caa-viewport-buttons {
+    display: inline-flex;
+    background: #f0f0f1;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 4px;
+    gap: 4px;
+}
+
+.caa-viewport-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    cursor: pointer;
+    border-radius: 3px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #50575e;
+    transition: all 0.2s ease;
+    background: transparent;
+}
+
+.caa-viewport-btn:hover {
+    background: rgba(255, 255, 255, 0.6);
+    color: #1d2327;
+}
+
+.caa-viewport-btn input[type="radio"] {
+    display: none;
+}
+
+.caa-viewport-btn.caa-viewport-active,
+.caa-viewport-btn:has(input[type="radio"]:checked) {
+    background: #fff;
+    color: #2271b1;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.caa-viewport-btn .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: inherit;
+}
+
+.caa-viewport-info {
+    width: 100%;
+    margin: 5px 0 0 0;
+    font-size: 12px;
+    color: #646970;
+    font-style: italic;
+}
+
+/* Viewport field visibility states */
+.caa-viewport-field {
+    display: none;
+}
+
+.caa-viewport-field.caa-viewport-visible {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Desktop is default visible */
+.caa-viewport-field.caa-viewport-desktop {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Hide desktop when tablet or mobile is active */
+form.caa-viewport-active-tablet .caa-viewport-field.caa-viewport-desktop,
+form.caa-viewport-active-mobile .caa-viewport-field.caa-viewport-desktop,
+.caa-viewport-active-tablet .caa-viewport-field.caa-viewport-desktop,
+.caa-viewport-active-mobile .caa-viewport-field.caa-viewport-desktop {
+    display: none;
+}
+
+/* Show tablet when tablet is active */
+form.caa-viewport-active-tablet .caa-viewport-field.caa-viewport-tablet,
+.caa-viewport-active-tablet .caa-viewport-field.caa-viewport-tablet {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Show mobile when mobile is active */
+form.caa-viewport-active-mobile .caa-viewport-field.caa-viewport-mobile,
+.caa-viewport-active-mobile .caa-viewport-field.caa-viewport-mobile {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Override indicator dot */
+.caa-override-indicator {
+    color: #2271b1;
+    font-size: 10px;
+    margin-left: 4px;
+    vertical-align: super;
+}
+
+/* Inherit label for tablet/mobile fields */
+.caa-inherit-label {
+    color: #646970;
+    font-style: italic;
+    font-size: 12px;
+    margin-left: 8px;
+}
+
+/* Responsive field row styling */
+tr.caa-responsive-field th label {
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Animation Settings with viewport support */
+.caa-animation-settings-viewport .form-table {
+    margin: 0;
+}
+
+.caa-animation-settings-viewport .caa-viewport-switcher {
+    margin-bottom: 20px;
 }

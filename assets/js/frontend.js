@@ -7,6 +7,56 @@ const defaultAnimationProps = {
   ease: 'power4'
 };
 
+/**
+ * Get current viewport based on breakpoints
+ * @param {Object} breakpoints - { tablet: 782, mobile: 600 }
+ * @returns {string} 'desktop' | 'tablet' | 'mobile'
+ */
+function getCurrentViewport(breakpoints) {
+  const width = window.innerWidth;
+  if (width <= breakpoints.mobile) return 'mobile';
+  if (width <= breakpoints.tablet) return 'tablet';
+  return 'desktop';
+}
+
+/**
+ * Get setting value with fallback chain: mobile → tablet → desktop
+ * @param {Object} settings - Instance settings object
+ * @param {string} key - Base setting key (camelCase, e.g., 'duration')
+ * @param {string} viewport - Current viewport ('desktop', 'tablet', 'mobile')
+ * @returns {*} The setting value with fallback logic applied
+ */
+function getResponsiveSetting(settings, key, viewport) {
+  // Desktop always returns base setting
+  if (viewport === 'desktop') {
+    return settings[key];
+  }
+
+  // Tablet: check tablet override, fallback to desktop
+  if (viewport === 'tablet') {
+    const tabletKey = key + 'Tablet';
+    if (settings[tabletKey] !== undefined && settings[tabletKey] !== '' && settings[tabletKey] !== null) {
+      return settings[tabletKey];
+    }
+    return settings[key]; // fallback to desktop
+  }
+
+  // Mobile: check mobile override, then tablet, then desktop
+  if (viewport === 'mobile') {
+    const mobileKey = key + 'Mobile';
+    if (settings[mobileKey] !== undefined && settings[mobileKey] !== '' && settings[mobileKey] !== null) {
+      return settings[mobileKey];
+    }
+    const tabletKey = key + 'Tablet';
+    if (settings[tabletKey] !== undefined && settings[tabletKey] !== '' && settings[tabletKey] !== null) {
+      return settings[tabletKey];
+    }
+    return settings[key]; // fallback to desktop
+  }
+
+  return settings[key]; // default fallback
+}
+
 // Helper function to verify SplitType library is available
 function waitForSplitType() {
   let SplitTypeLib = globalThis.SplitType || window.SplitType;
@@ -1240,11 +1290,16 @@ function initInstance(instanceSettings, globalSettings) {
 
   // Global mobile disable settings
   const disableMobile = globalSettings.disableMobile === '1';
-  const mobileBreakpoint = parseInt(globalSettings.mobileBreakpoint) || 768;
+
+  // Viewport breakpoints for responsive settings
+  const breakpoints = {
+    tablet: parseInt(globalSettings.tabletBreakpoint) || 782,
+    mobile: parseInt(globalSettings.mobileBreakpoint) || 600
+  };
 
   // Check if effects should be disabled on mobile
-  if (disableMobile && window.innerWidth < mobileBreakpoint) {
-    console.log('[CAA] Effects disabled on mobile - viewport width:', window.innerWidth, '< breakpoint:', mobileBreakpoint);
+  if (disableMobile && window.innerWidth < breakpoints.mobile) {
+    console.log('[CAA] Effects disabled on mobile - viewport width:', window.innerWidth, '< breakpoint:', breakpoints.mobile);
     return;
   }
 

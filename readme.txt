@@ -1,10 +1,10 @@
 === Logo Collision ===
 Contributors: wpmitch - exzent.de
-Tags: animation, scroll, gsap, header, logo
+Tags: animation, scroll, gsap, header, logo, responsive
 Requires at least: 5.0
 Tested up to: 6.9
-Stable tag: 1.0.1
-Version: 1.0.1
+Stable tag: 1.1.0
+Version: 1.1.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -34,6 +34,7 @@ Context-Aware Animation is a WordPress plugin that automatically detects when yo
 
 **Pro Features:**
 
+* **Responsive Viewport Settings** - Configure different animation settings for Desktop, Tablet, and Mobile viewports. Each viewport can have its own Duration, Easing, and Scroll Offsets with automatic fallback inheritance (Mobile → Tablet → Desktop). [Pro Feature - NEW in 1.1.0]
 * Multiple Instances - Create up to 10 instances to animate different elements with separate settings. Each instance can have its own logo selector, effect, animation settings, and page filtering rules. [Pro Feature]
 * Element Effect Mappings - Map specific elements to different effects. When the logo collides with these elements, the mapped effect will be used instead of the global default. Perfect for applying different effects to different sections of your page (e.g., scale for hero section, blur for portfolio, rotation for testimonials). [Pro Feature]
 * Page Filtering - Control where the plugin runs with advanced filtering options. Include or exclude specific post types, all pages, all posts, or individual items. Choose between include mode (run only on selected pages) or exclude mode (run everywhere except selected pages). [Pro Feature]
@@ -92,6 +93,14 @@ No, this plugin does not slow down your theme. The required libraries (GSAP and 
 
 == Changelog ==
 
+= 1.1.0 =
+* NEW: Responsive Viewport Settings (Pro) - Configure separate animation settings for Desktop, Tablet, and Mobile
+* Viewport Switcher UI with Desktop/Tablet/Mobile toggle buttons
+* Per-viewport Duration, Easing, Start Offset, and End Offset settings
+* Automatic fallback inheritance: Mobile inherits from Tablet, Tablet inherits from Desktop
+* Global viewport breakpoint configuration (default: Tablet ≤782px, Mobile ≤600px)
+* Override indicators show which fields have viewport-specific values
+
 = 1.0.1 =
 * Added Export/Import Settings - Backup your configuration to JSON and restore anytime
 * Perfect for site migrations, staging deployments, and upgrading to Pro without losing settings
@@ -106,9 +115,13 @@ No, this plugin does not slow down your theme. The required libraries (GSAP and 
 
 == Upgrade Notice ==
 
+= 1.1.0 =
+New Responsive Viewport Settings feature allows different animation configurations for Desktop, Tablet, and Mobile viewports (Pro feature).
+
 = 1.0.1 =
 New Export/Import feature lets you backup settings and seamlessly migrate between sites or upgrade to Pro without losing your configuration.
 
 = 1.0.0 =
 Initial release of Context-Aware Animation plugin.
+
 

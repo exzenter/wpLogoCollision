@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: Logo Collision
- * Plugin URI: https://wordpress.org/plugins/logo-collision/
+ * Plugin URI: https://exzent.de/logo-collision/
  * Description: Apply context-aware scroll animations to your WordPress header logo when it would collide with scrolling content.
- * Version: 1.0.1
+ * Version: 1.1.0
  * Author: wpmitch
- * Author URI: https://profiles.wordpress.org/wpmitch/
+ * Author URI: https://exzent.de
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: logo-collision
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('CAA_VERSION', '1.0.1');
+define('CAA_VERSION', '1.1.0');
 define('CAA_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('CAA_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('LOGO_COLLISION_PRO', true); // Build script sets to false for Free version
@@ -115,35 +115,76 @@ class Context_Aware_Animation {
             'excluded_elements' => '',
             'global_offset' => '0',
             'debug_mode' => '0',
+            // Animation settings with viewport variants (empty = inherit from desktop)
             'duration' => '0.6',
+            'duration_tablet' => '',
+            'duration_mobile' => '',
             'ease' => 'power4',
+            'ease_tablet' => '',
+            'ease_mobile' => '',
             'offset_start' => '30',
+            'offset_start_tablet' => '',
+            'offset_start_mobile' => '',
             'offset_end' => '10',
-            // Effect 1: Scale
+            'offset_end_tablet' => '',
+            'offset_end_mobile' => '',
+            // Effect 1: Scale (with viewport variants)
             'effect1_scale_down' => '0',
+            'effect1_scale_down_tablet' => '',
+            'effect1_scale_down_mobile' => '',
             'effect1_origin_x' => '0',
+            'effect1_origin_x_tablet' => '',
+            'effect1_origin_x_mobile' => '',
             'effect1_origin_y' => '50',
-            // Effect 2: Blur
+            'effect1_origin_y_tablet' => '',
+            'effect1_origin_y_mobile' => '',
+            // Effect 2: Blur (with viewport variants)
             'effect2_blur_amount' => '5',
+            'effect2_blur_amount_tablet' => '',
+            'effect2_blur_amount_mobile' => '',
             'effect2_blur_scale' => '0.9',
+            'effect2_blur_scale_tablet' => '',
+            'effect2_blur_scale_mobile' => '',
             'effect2_blur_duration' => '0.2',
-            // Effect 4: Text Split
+            'effect2_blur_duration_tablet' => '',
+            'effect2_blur_duration_mobile' => '',
+            // Effect 4: Text Split (with viewport variants)
             'effect4_text_x_range' => '50',
+            'effect4_text_x_range_tablet' => '',
+            'effect4_text_x_range_mobile' => '',
             'effect4_text_y_range' => '40',
+            'effect4_text_y_range_tablet' => '',
+            'effect4_text_y_range_mobile' => '',
             'effect4_stagger_amount' => '0.03',
-            // Effect 5: Character Shuffle
+            'effect4_stagger_amount_tablet' => '',
+            'effect4_stagger_amount_mobile' => '',
+            // Effect 5: Character Shuffle (with viewport variants)
             'effect5_shuffle_iterations' => '2',
+            'effect5_shuffle_iterations_tablet' => '',
+            'effect5_shuffle_iterations_mobile' => '',
             'effect5_shuffle_duration' => '0.03',
+            'effect5_shuffle_duration_tablet' => '',
+            'effect5_shuffle_duration_mobile' => '',
             'effect5_char_delay' => '0.03',
-            // Effect 6: Rotation
+            'effect5_char_delay_tablet' => '',
+            'effect5_char_delay_mobile' => '',
+            // Effect 6: Rotation (with viewport variants)
             'effect6_rotation' => '-90',
+            'effect6_rotation_tablet' => '',
+            'effect6_rotation_mobile' => '',
             'effect6_x_percent' => '-5',
+            'effect6_x_percent_tablet' => '',
+            'effect6_x_percent_mobile' => '',
             'effect6_origin_x' => '0',
+            'effect6_origin_x_tablet' => '',
+            'effect6_origin_x_mobile' => '',
             'effect6_origin_y' => '100',
-            // Effect 7: Move Away
+            'effect6_origin_y_tablet' => '',
+            'effect6_origin_y_mobile' => '',
+            // Effect 7: Move Away (with viewport variants)
             'effect7_move_distance' => '',
-            // Event target for cah-pause/cah-resume events
-            'event_target_selector' => '',
+            'effect7_move_distance_tablet' => '',
+            'effect7_move_distance_mobile' => '',
             // Pro features per instance
             'effect_mappings' => array(),
             'enable_filtering' => '0',
@@ -354,53 +395,94 @@ class Context_Aware_Animation {
         $sanitized['logo_id'] = isset($data['logo_id']) ? sanitize_text_field($data['logo_id']) : '';
         $sanitized['included_elements'] = isset($data['included_elements']) ? sanitize_textarea_field($data['included_elements']) : '';
         $sanitized['excluded_elements'] = isset($data['excluded_elements']) ? sanitize_textarea_field($data['excluded_elements']) : '';
-        $sanitized['event_target_selector'] = isset($data['event_target_selector']) ? sanitize_text_field($data['event_target_selector']) : '';
         
         // Effect selection
         $sanitized['selected_effect'] = isset($data['selected_effect']) ? $this->sanitize_effect($data['selected_effect']) : '1';
         
-        // Offset fields
+        // Offset fields (with viewport variants)
         $sanitized['global_offset'] = isset($data['global_offset']) ? $this->sanitize_offset($data['global_offset']) : '0';
         $sanitized['offset_start'] = isset($data['offset_start']) ? $this->sanitize_offset($data['offset_start']) : '30';
+        $sanitized['offset_start_tablet'] = isset($data['offset_start_tablet']) ? $this->sanitize_viewport_value($data['offset_start_tablet'], 'offset') : '';
+        $sanitized['offset_start_mobile'] = isset($data['offset_start_mobile']) ? $this->sanitize_viewport_value($data['offset_start_mobile'], 'offset') : '';
         $sanitized['offset_end'] = isset($data['offset_end']) ? $this->sanitize_offset($data['offset_end']) : '10';
+        $sanitized['offset_end_tablet'] = isset($data['offset_end_tablet']) ? $this->sanitize_viewport_value($data['offset_end_tablet'], 'offset') : '';
+        $sanitized['offset_end_mobile'] = isset($data['offset_end_mobile']) ? $this->sanitize_viewport_value($data['offset_end_mobile'], 'offset') : '';
         
-        // Float fields
+        // Float fields (with viewport variants)
         $sanitized['duration'] = isset($data['duration']) ? $this->sanitize_float($data['duration']) : '0.6';
+        $sanitized['duration_tablet'] = isset($data['duration_tablet']) ? $this->sanitize_viewport_value($data['duration_tablet'], 'float') : '';
+        $sanitized['duration_mobile'] = isset($data['duration_mobile']) ? $this->sanitize_viewport_value($data['duration_mobile'], 'float') : '';
         
-        // Ease
+        // Ease (with viewport variants)
         $sanitized['ease'] = isset($data['ease']) ? $this->sanitize_ease($data['ease']) : 'power4';
+        $sanitized['ease_tablet'] = isset($data['ease_tablet']) ? $this->sanitize_viewport_value($data['ease_tablet'], 'ease') : '';
+        $sanitized['ease_mobile'] = isset($data['ease_mobile']) ? $this->sanitize_viewport_value($data['ease_mobile'], 'ease') : '';
         
         // Filter mode
         $sanitized['filter_mode'] = isset($data['filter_mode']) ? $this->sanitize_filter_mode($data['filter_mode']) : 'include';
         
-        // Effect 1 settings
+        // Effect 1 settings (with viewport variants)
         $sanitized['effect1_scale_down'] = isset($data['effect1_scale_down']) ? $this->sanitize_float($data['effect1_scale_down']) : '0';
+        $sanitized['effect1_scale_down_tablet'] = isset($data['effect1_scale_down_tablet']) ? $this->sanitize_viewport_value($data['effect1_scale_down_tablet'], 'float') : '';
+        $sanitized['effect1_scale_down_mobile'] = isset($data['effect1_scale_down_mobile']) ? $this->sanitize_viewport_value($data['effect1_scale_down_mobile'], 'float') : '';
         $sanitized['effect1_origin_x'] = isset($data['effect1_origin_x']) ? $this->sanitize_percent($data['effect1_origin_x']) : '0';
+        $sanitized['effect1_origin_x_tablet'] = isset($data['effect1_origin_x_tablet']) ? $this->sanitize_viewport_value($data['effect1_origin_x_tablet'], 'percent') : '';
+        $sanitized['effect1_origin_x_mobile'] = isset($data['effect1_origin_x_mobile']) ? $this->sanitize_viewport_value($data['effect1_origin_x_mobile'], 'percent') : '';
         $sanitized['effect1_origin_y'] = isset($data['effect1_origin_y']) ? $this->sanitize_percent($data['effect1_origin_y']) : '50';
+        $sanitized['effect1_origin_y_tablet'] = isset($data['effect1_origin_y_tablet']) ? $this->sanitize_viewport_value($data['effect1_origin_y_tablet'], 'percent') : '';
+        $sanitized['effect1_origin_y_mobile'] = isset($data['effect1_origin_y_mobile']) ? $this->sanitize_viewport_value($data['effect1_origin_y_mobile'], 'percent') : '';
         
-        // Effect 2 settings
+        // Effect 2 settings (with viewport variants)
         $sanitized['effect2_blur_amount'] = isset($data['effect2_blur_amount']) ? $this->sanitize_float($data['effect2_blur_amount']) : '5';
+        $sanitized['effect2_blur_amount_tablet'] = isset($data['effect2_blur_amount_tablet']) ? $this->sanitize_viewport_value($data['effect2_blur_amount_tablet'], 'float') : '';
+        $sanitized['effect2_blur_amount_mobile'] = isset($data['effect2_blur_amount_mobile']) ? $this->sanitize_viewport_value($data['effect2_blur_amount_mobile'], 'float') : '';
         $sanitized['effect2_blur_scale'] = isset($data['effect2_blur_scale']) ? $this->sanitize_float($data['effect2_blur_scale']) : '0.9';
+        $sanitized['effect2_blur_scale_tablet'] = isset($data['effect2_blur_scale_tablet']) ? $this->sanitize_viewport_value($data['effect2_blur_scale_tablet'], 'float') : '';
+        $sanitized['effect2_blur_scale_mobile'] = isset($data['effect2_blur_scale_mobile']) ? $this->sanitize_viewport_value($data['effect2_blur_scale_mobile'], 'float') : '';
         $sanitized['effect2_blur_duration'] = isset($data['effect2_blur_duration']) ? $this->sanitize_float($data['effect2_blur_duration']) : '0.2';
+        $sanitized['effect2_blur_duration_tablet'] = isset($data['effect2_blur_duration_tablet']) ? $this->sanitize_viewport_value($data['effect2_blur_duration_tablet'], 'float') : '';
+        $sanitized['effect2_blur_duration_mobile'] = isset($data['effect2_blur_duration_mobile']) ? $this->sanitize_viewport_value($data['effect2_blur_duration_mobile'], 'float') : '';
         
-        // Effect 4 settings
+        // Effect 4 settings (with viewport variants)
         $sanitized['effect4_text_x_range'] = isset($data['effect4_text_x_range']) ? $this->sanitize_offset($data['effect4_text_x_range']) : '50';
+        $sanitized['effect4_text_x_range_tablet'] = isset($data['effect4_text_x_range_tablet']) ? $this->sanitize_viewport_value($data['effect4_text_x_range_tablet'], 'offset') : '';
+        $sanitized['effect4_text_x_range_mobile'] = isset($data['effect4_text_x_range_mobile']) ? $this->sanitize_viewport_value($data['effect4_text_x_range_mobile'], 'offset') : '';
         $sanitized['effect4_text_y_range'] = isset($data['effect4_text_y_range']) ? $this->sanitize_offset($data['effect4_text_y_range']) : '40';
+        $sanitized['effect4_text_y_range_tablet'] = isset($data['effect4_text_y_range_tablet']) ? $this->sanitize_viewport_value($data['effect4_text_y_range_tablet'], 'offset') : '';
+        $sanitized['effect4_text_y_range_mobile'] = isset($data['effect4_text_y_range_mobile']) ? $this->sanitize_viewport_value($data['effect4_text_y_range_mobile'], 'offset') : '';
         $sanitized['effect4_stagger_amount'] = isset($data['effect4_stagger_amount']) ? $this->sanitize_float($data['effect4_stagger_amount']) : '0.03';
+        $sanitized['effect4_stagger_amount_tablet'] = isset($data['effect4_stagger_amount_tablet']) ? $this->sanitize_viewport_value($data['effect4_stagger_amount_tablet'], 'float') : '';
+        $sanitized['effect4_stagger_amount_mobile'] = isset($data['effect4_stagger_amount_mobile']) ? $this->sanitize_viewport_value($data['effect4_stagger_amount_mobile'], 'float') : '';
         
-        // Effect 5 settings
+        // Effect 5 settings (with viewport variants)
         $sanitized['effect5_shuffle_iterations'] = isset($data['effect5_shuffle_iterations']) ? $this->sanitize_offset($data['effect5_shuffle_iterations']) : '2';
+        $sanitized['effect5_shuffle_iterations_tablet'] = isset($data['effect5_shuffle_iterations_tablet']) ? $this->sanitize_viewport_value($data['effect5_shuffle_iterations_tablet'], 'offset') : '';
+        $sanitized['effect5_shuffle_iterations_mobile'] = isset($data['effect5_shuffle_iterations_mobile']) ? $this->sanitize_viewport_value($data['effect5_shuffle_iterations_mobile'], 'offset') : '';
         $sanitized['effect5_shuffle_duration'] = isset($data['effect5_shuffle_duration']) ? $this->sanitize_float($data['effect5_shuffle_duration']) : '0.03';
+        $sanitized['effect5_shuffle_duration_tablet'] = isset($data['effect5_shuffle_duration_tablet']) ? $this->sanitize_viewport_value($data['effect5_shuffle_duration_tablet'], 'float') : '';
+        $sanitized['effect5_shuffle_duration_mobile'] = isset($data['effect5_shuffle_duration_mobile']) ? $this->sanitize_viewport_value($data['effect5_shuffle_duration_mobile'], 'float') : '';
         $sanitized['effect5_char_delay'] = isset($data['effect5_char_delay']) ? $this->sanitize_float($data['effect5_char_delay']) : '0.03';
+        $sanitized['effect5_char_delay_tablet'] = isset($data['effect5_char_delay_tablet']) ? $this->sanitize_viewport_value($data['effect5_char_delay_tablet'], 'float') : '';
+        $sanitized['effect5_char_delay_mobile'] = isset($data['effect5_char_delay_mobile']) ? $this->sanitize_viewport_value($data['effect5_char_delay_mobile'], 'float') : '';
         
-        // Effect 6 settings
+        // Effect 6 settings (with viewport variants)
         $sanitized['effect6_rotation'] = isset($data['effect6_rotation']) ? $this->sanitize_offset($data['effect6_rotation']) : '-90';
+        $sanitized['effect6_rotation_tablet'] = isset($data['effect6_rotation_tablet']) ? $this->sanitize_viewport_value($data['effect6_rotation_tablet'], 'offset') : '';
+        $sanitized['effect6_rotation_mobile'] = isset($data['effect6_rotation_mobile']) ? $this->sanitize_viewport_value($data['effect6_rotation_mobile'], 'offset') : '';
         $sanitized['effect6_x_percent'] = isset($data['effect6_x_percent']) ? $this->sanitize_offset($data['effect6_x_percent']) : '-5';
+        $sanitized['effect6_x_percent_tablet'] = isset($data['effect6_x_percent_tablet']) ? $this->sanitize_viewport_value($data['effect6_x_percent_tablet'], 'offset') : '';
+        $sanitized['effect6_x_percent_mobile'] = isset($data['effect6_x_percent_mobile']) ? $this->sanitize_viewport_value($data['effect6_x_percent_mobile'], 'offset') : '';
         $sanitized['effect6_origin_x'] = isset($data['effect6_origin_x']) ? $this->sanitize_percent($data['effect6_origin_x']) : '0';
+        $sanitized['effect6_origin_x_tablet'] = isset($data['effect6_origin_x_tablet']) ? $this->sanitize_viewport_value($data['effect6_origin_x_tablet'], 'percent') : '';
+        $sanitized['effect6_origin_x_mobile'] = isset($data['effect6_origin_x_mobile']) ? $this->sanitize_viewport_value($data['effect6_origin_x_mobile'], 'percent') : '';
         $sanitized['effect6_origin_y'] = isset($data['effect6_origin_y']) ? $this->sanitize_percent($data['effect6_origin_y']) : '100';
+        $sanitized['effect6_origin_y_tablet'] = isset($data['effect6_origin_y_tablet']) ? $this->sanitize_viewport_value($data['effect6_origin_y_tablet'], 'percent') : '';
+        $sanitized['effect6_origin_y_mobile'] = isset($data['effect6_origin_y_mobile']) ? $this->sanitize_viewport_value($data['effect6_origin_y_mobile'], 'percent') : '';
         
-        // Effect 7 settings
+        // Effect 7 settings (with viewport variants)
         $sanitized['effect7_move_distance'] = isset($data['effect7_move_distance']) ? $this->sanitize_move_away($data['effect7_move_distance']) : '';
+        $sanitized['effect7_move_distance_tablet'] = isset($data['effect7_move_distance_tablet']) ? $this->sanitize_viewport_value($data['effect7_move_distance_tablet'], 'move_away') : '';
+        $sanitized['effect7_move_distance_mobile'] = isset($data['effect7_move_distance_mobile']) ? $this->sanitize_viewport_value($data['effect7_move_distance_mobile'], 'move_away') : '';
         
         // Array fields
         $sanitized['effect_mappings'] = isset($data['effect_mappings']) ? $this->sanitize_effect_mappings($data['effect_mappings']) : array();
@@ -408,6 +490,32 @@ class Context_Aware_Animation {
         $sanitized['selected_items'] = isset($data['selected_items']) ? $this->sanitize_post_ids($data['selected_items']) : array();
         
         return $sanitized;
+    }
+    
+    /**
+     * Sanitize viewport-specific value (allows empty string for inheritance)
+     */
+    public function sanitize_viewport_value($value, $type = 'text') {
+        // Empty string means inherit from desktop - preserve it
+        if ($value === '' || $value === null) {
+            return '';
+        }
+        
+        // Apply appropriate sanitization based on type
+        switch ($type) {
+            case 'float':
+                return $this->sanitize_float($value);
+            case 'offset':
+                return $this->sanitize_offset($value);
+            case 'percent':
+                return $this->sanitize_percent($value);
+            case 'ease':
+                return $this->sanitize_ease($value);
+            case 'move_away':
+                return $this->sanitize_move_away($value);
+            default:
+                return sanitize_text_field($value);
+        }
     }
     
     /**
@@ -609,10 +717,17 @@ class Context_Aware_Animation {
             'default' => '0'
         ));
         
+        // Viewport breakpoints (global settings)
+        register_setting('caa_settings_group', 'caa_tablet_breakpoint', array(
+            'type' => 'string',
+            'sanitize_callback' => 'absint',
+            'default' => '782'
+        ));
+        
         register_setting('caa_settings_group', 'caa_mobile_breakpoint', array(
             'type' => 'string',
             'sanitize_callback' => 'absint',
-            'default' => '768'
+            'default' => '600'
         ));
         
         // Global animation settings
@@ -1260,7 +1375,6 @@ class Context_Aware_Animation {
             'effect6OriginX' => $instance['effect6_origin_x'],
             'effect6OriginY' => $instance['effect6_origin_y'],
             'effect7MoveDistance' => $instance['effect7_move_distance'],
-            'eventTargetSelector' => $instance['event_target_selector'],
         );
         
         return $settings_array;
@@ -1292,7 +1406,10 @@ class Context_Aware_Animation {
     private function build_settings_array() {
         // Get global mobile settings (shared across all instances)
         $disable_mobile = get_option('caa_disable_mobile', '0');
-        $mobile_breakpoint = get_option('caa_mobile_breakpoint', '768');
+        
+        // Get viewport breakpoints (global settings)
+        $tablet_breakpoint = get_option('caa_tablet_breakpoint', '782');
+        $mobile_breakpoint = get_option('caa_mobile_breakpoint', '600');
         
         // Get all enabled instances' settings
         $instances_settings = $this->build_all_instances_settings();
@@ -1300,6 +1417,7 @@ class Context_Aware_Animation {
         // Return new structure with instances array
         return array(
             'disableMobile' => $disable_mobile,
+            'tabletBreakpoint' => $tablet_breakpoint,
             'mobileBreakpoint' => $mobile_breakpoint,
             'instances' => $instances_settings,
         );
