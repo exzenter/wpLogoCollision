@@ -107,23 +107,54 @@
         });
 
         // =====================
-        // Effect Accordions
+        // Effect Selection (General Settings Tab)
         // =====================
 
-        // Handle effect radio button changes
+        // Handle effect radio button changes (horizontal button row)
         $('.caa-effect-radio').on('change', function () {
             var selectedEffect = $(this).val();
+            var $container = $(this).closest('td');
 
-            // Hide all accordions
-            $('.caa-effect-accordion').slideUp(200);
+            // Update button active states (new horizontal button row)
+            $container.find('.caa-effect-btn').removeClass('caa-effect-btn-active');
+            $(this).closest('.caa-effect-btn').addClass('caa-effect-btn-active');
 
-            // Show the accordion for the selected effect
-            $('.caa-effect-accordion[data-effect="' + selectedEffect + '"]').slideDown(200);
+            // Handle new settings panel UI
+            var $settingsPanel = $container.find('.caa-effect-settings-panel');
+            if ($settingsPanel.length) {
+                $settingsPanel.find('.caa-effect-settings-content').slideUp(150);
+                $settingsPanel.find('.caa-effect-settings-content[data-effect="' + selectedEffect + '"]').slideDown(150);
+            }
+
+            // Handle old card-based UI (for Pro tab)
+            var $fieldset = $(this).closest('fieldset');
+            if ($fieldset.hasClass('caa-effect-fieldset')) {
+                $fieldset.find('.caa-effect-card').removeClass('caa-effect-active');
+                $(this).closest('.caa-effect-card').addClass('caa-effect-active');
+                $fieldset.find('.caa-effect-card-body').slideUp(200);
+                $(this).closest('.caa-effect-card').find('.caa-effect-card-body').slideDown(200);
+            } else if (!$settingsPanel.length) {
+                // Handle old accordion-style UI
+                $('.caa-effect-accordion').slideUp(200);
+                $('.caa-effect-accordion[data-effect="' + selectedEffect + '"]').slideDown(200);
+            }
         });
 
-        // Initialize: show accordion for currently selected effect
+        // Initialize: show active effect's settings
         var selectedEffect = $('.caa-effect-radio:checked').val();
         if (selectedEffect) {
+            // New horizontal button style
+            var $activeBtn = $('.caa-effect-btn input[value="' + selectedEffect + '"]').closest('.caa-effect-btn');
+            $activeBtn.addClass('caa-effect-btn-active');
+            $('.caa-effect-settings-content[data-effect="' + selectedEffect + '"]').show();
+
+            // Old card style (Pro tab)
+            var $activeCard = $('.caa-effect-card[data-effect="' + selectedEffect + '"]');
+            if ($activeCard.length) {
+                $activeCard.addClass('caa-effect-active');
+                $activeCard.find('.caa-effect-card-body').show();
+            }
+            // Old accordion style
             $('.caa-effect-accordion[data-effect="' + selectedEffect + '"]').show();
         }
 
@@ -158,30 +189,35 @@
             }
         });
 
-        // Handle override checkbox toggle
+        // Override checkbox - now only toggles the enabled state (does NOT control panel visibility)
+        // The visual feedback (gear icon color) is handled by CSS
         $(document).on('change', '.caa-override-checkbox', function () {
-            var $wrapper = $(this).closest('.caa-mapping-row-wrapper');
+            // No panel sliding - override just enables/disables the settings values
+            // Panel visibility is controlled by the chevron toggle button
+        });
+
+        // Handle panel toggle button (chevron) - controls settings panel visibility
+        $(document).on('click', '.caa-panel-toggle', function () {
+            var $button = $(this);
+            var $wrapper = $button.closest('.caa-mapping-row-wrapper');
             var $panel = $wrapper.find('.caa-mapping-settings-panel');
 
-            if ($(this).is(':checked')) {
-                $panel.slideDown(200);
-            } else {
+            if ($button.hasClass('caa-expanded')) {
+                // Collapse
                 $panel.slideUp(200);
+                $button.removeClass('caa-expanded');
+            } else {
+                // Expand
+                $panel.slideDown(200);
+                $button.addClass('caa-expanded');
             }
         });
 
-        // Handle effect dropdown change - auto-uncheck override and reset settings
+        // Handle effect dropdown change - reset settings but keep panel state
         $(document).on('change', '.caa-mapping-effect-select', function () {
             var $wrapper = $(this).closest('.caa-mapping-row-wrapper');
-            var $checkbox = $wrapper.find('.caa-override-checkbox');
             var $panel = $wrapper.find('.caa-mapping-settings-panel');
             var selectedEffect = $(this).val();
-
-            // Uncheck the override checkbox
-            $checkbox.prop('checked', false);
-
-            // Hide the settings panel
-            $panel.slideUp(200);
 
             // Update the panel's data-effect attribute
             $panel.attr('data-effect', selectedEffect);
@@ -194,6 +230,26 @@
 
             // Reset all settings to defaults
             resetMappingSettings($wrapper, selectedEffect);
+        });
+
+        // Handle collapsible section chevron toggle
+        $(document).on('click', '.caa-collapsible-header', function () {
+            var $header = $(this);
+            var $section = $header.closest('.caa-collapsible-section');
+            var $body = $header.next('.caa-collapsible-body');
+            var isExpanded = $header.attr('data-expanded') === 'true';
+
+            if (isExpanded) {
+                // Collapse
+                $body.slideUp(200);
+                $header.attr('data-expanded', 'false');
+                $section.addClass('caa-collapsed');
+            } else {
+                // Expand
+                $body.slideDown(200);
+                $header.attr('data-expanded', 'true');
+                $section.removeClass('caa-collapsed');
+            }
         });
 
         // Reset mapping settings to defaults
@@ -253,10 +309,15 @@
                 '</select>' +
                 '</div>' +
                 '<div class="caa-mapping-col-override">' +
-                '<label class="caa-override-checkbox-label">' +
+                '<label class="caa-override-checkbox-label" title="Enable custom settings override">' +
                 '<input type="checkbox" name="caa_mappings[' + index + '][override_enabled]" value="1" class="caa-override-checkbox" />' +
                 '<span class="dashicons dashicons-admin-generic"></span>' +
                 '</label>' +
+                '</div>' +
+                '<div class="caa-mapping-col-expand">' +
+                '<button type="button" class="caa-panel-toggle" title="Expand/Collapse settings">' +
+                '<span class="dashicons dashicons-arrow-down-alt2 caa-chevron"></span>' +
+                '</button>' +
                 '</div>' +
                 '<div class="caa-mapping-col-actions">' +
                 '<button type="button" class="button caa-remove-mapping" title="Remove Mapping">' +
@@ -266,8 +327,13 @@
                 '</div>' +
                 '<div class="caa-mapping-settings-panel" data-effect="1">' +
                 '<div class="caa-mapping-settings-content">' +
-                '<div class="caa-settings-section">' +
+                // Animation Settings Collapsible Section
+                '<div class="caa-collapsible-section">' +
+                '<div class="caa-collapsible-header caa-animation-header" data-expanded="true">' +
+                '<span class="dashicons dashicons-arrow-down-alt2 caa-chevron"></span>' +
                 '<h4>Animation Settings</h4>' +
+                '</div>' +
+                '<div class="caa-collapsible-body caa-animation-body">' +
                 '<div class="caa-settings-grid">' +
                 '<div class="caa-setting-field">' +
                 '<label>Duration</label>' +
@@ -301,8 +367,15 @@
                 '</div>' +
                 '</div>' +
                 '</div>' +
+                '</div>' +
+                // Effect Settings Collapsible Section
+                '<div class="caa-collapsible-section caa-effect-section">' +
+                '<div class="caa-collapsible-header caa-effect-header" data-expanded="true">' +
+                '<span class="dashicons dashicons-arrow-down-alt2 caa-chevron"></span>' +
+                '<h4>Effect Settings</h4>' +
+                '</div>' +
+                '<div class="caa-collapsible-body caa-effect-body">' +
                 '<div class="caa-effect-settings caa-effect-settings-1" style="display: block;">' +
-                '<h4>Scale Settings</h4>' +
                 '<div class="caa-settings-grid">' +
                 '<div class="caa-setting-field">' +
                 '<label>Scale Down</label>' +
@@ -321,7 +394,6 @@
                 '</div>' +
                 '</div>' +
                 '<div class="caa-effect-settings caa-effect-settings-2">' +
-                '<h4>Blur Settings</h4>' +
                 '<div class="caa-settings-grid">' +
                 '<div class="caa-setting-field">' +
                 '<label>Blur Amount</label>' +
@@ -343,7 +415,6 @@
                 '<p class="description">This effect uses only the animation settings above.</p>' +
                 '</div>' +
                 '<div class="caa-effect-settings caa-effect-settings-4">' +
-                '<h4>Text Split Settings</h4>' +
                 '<div class="caa-settings-grid">' +
                 '<div class="caa-setting-field">' +
                 '<label>X Range</label>' +
@@ -363,7 +434,6 @@
                 '</div>' +
                 '</div>' +
                 '<div class="caa-effect-settings caa-effect-settings-5">' +
-                '<h4>Character Shuffle Settings</h4>' +
                 '<div class="caa-settings-grid">' +
                 '<div class="caa-setting-field">' +
                 '<label>Iterations</label>' +
@@ -382,7 +452,6 @@
                 '</div>' +
                 '</div>' +
                 '<div class="caa-effect-settings caa-effect-settings-6">' +
-                '<h4>Rotation Settings</h4>' +
                 '<div class="caa-settings-grid">' +
                 '<div class="caa-setting-field">' +
                 '<label>Rotation</label>' +
@@ -407,11 +476,12 @@
                 '</div>' +
                 '</div>' +
                 '<div class="caa-effect-settings caa-effect-settings-7">' +
-                '<h4>Move Away Settings</h4>' +
                 '<div class="caa-settings-grid">' +
                 '<div class="caa-setting-field caa-setting-field-wide">' +
                 '<label>Move Distance</label>' +
                 '<input type="text" name="caa_mappings[' + index + '][settings][effect7_move_distance]" value="" class="regular-text" placeholder="auto (e.g., 100px or 50%)" />' +
+                '</div>' +
+                '</div>' +
                 '</div>' +
                 '</div>' +
                 '</div>' +

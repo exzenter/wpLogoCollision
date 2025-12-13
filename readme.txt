@@ -3,8 +3,8 @@ Contributors: wpmitch - exzent.de
 Tags: animation, scroll, gsap, header, logo, responsive
 Requires at least: 5.0
 Tested up to: 6.9
-Stable tag: 1.2.0
-Version: 1.2.0
+Stable tag: 1.2.1
+Version: 1.2.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -93,6 +93,11 @@ No, this plugin does not slow down your theme. The required libraries (GSAP and 
 
 == Changelog ==
 
+= 1.2.1 =
+* IMPROVED: Element Effect Mappings UI - Chevron toggle now in main row for expand/collapse
+* IMPROVED: Settings panel visibility independent from override toggle (collapse to save space while keeping override active)
+* IMPROVED: Separate collapsible sections for Animation Settings and Effect Settings
+
 = 1.2.0 =
 * NEW: Scroll Speed Animation Modifier - Dynamically adjust animation durations based on scroll speed
 * Configurable low/high scroll speed thresholds (default: 400-1200 px/s)
@@ -124,6 +129,9 @@ No, this plugin does not slow down your theme. The required libraries (GSAP and 
 * Automatic content detection
 
 == Upgrade Notice ==
+
+= 1.2.1 =
+Improved Element Effect Mappings UI with collapsible chevron toggle in the main row.
 
 = 1.2.0 =
 New Scroll Speed Animation Modifier dynamically adjusts animation speeds based on how fast users scroll.

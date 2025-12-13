@@ -3,7 +3,7 @@
  * Plugin Name: Logo Collision
  * Plugin URI: https://exzent.de/logo-collision/
  * Description: Apply context-aware scroll animations to your WordPress header logo when it would collide with scrolling content.
- * Version: 1.2.0
+ * Version: 1.2.1
  * Author: wpmitch
  * Author URI: https://exzent.de
  * License: GPL v2 or later
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('CAA_VERSION', '1.2.0');
+define('CAA_VERSION', '1.2.1');
 define('CAA_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('CAA_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('LOGO_COLLISION_PRO', true); // Build script sets to false for Free version

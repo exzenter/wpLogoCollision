@@ -259,7 +259,38 @@
 .caa-mapping-col-override {
     flex: 0 0 70px;
     text-align: center;
-    padding-right: 15px;
+    padding-right: 10px;
+}
+
+.caa-mapping-col-expand {
+    flex: 0 0 40px;
+    text-align: center;
+    padding-right: 10px;
+}
+
+.caa-panel-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+}
+
+.caa-panel-toggle:hover {
+    background: #f0f0f1;
+}
+
+.caa-panel-toggle .caa-chevron {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: #666;
+    transition: transform 0.2s ease;
+}
+
+.caa-panel-toggle.caa-expanded .caa-chevron {
+    transform: rotate(180deg);
 }
 
 .caa-mapping-col-actions {
@@ -512,6 +543,74 @@
     border-left: 3px solid #2271b1;
     font-style: italic;
     color: #646970;
+}
+
+/* Collapsible Sections with Chevron */
+.caa-collapsible-section {
+    margin-bottom: 10px;
+}
+
+.caa-collapsible-section:last-child {
+    margin-bottom: 0;
+}
+
+.caa-collapsible-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: #f0f0f1;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.caa-collapsible-header:hover {
+    background: #e8e8e8;
+}
+
+.caa-collapsible-header h4 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.caa-collapsible-header .caa-chevron {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: #666;
+    transition: transform 0.2s ease;
+}
+
+.caa-collapsible-header[data-expanded="false"] .caa-chevron {
+    transform: rotate(-90deg);
+}
+
+.caa-collapsible-body {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    background: #fff;
+}
+
+.caa-collapsible-section.caa-collapsed .caa-collapsible-body {
+    display: none;
+}
+
+/* Effect section inside collapsible */
+.caa-effect-section .caa-effect-settings {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+}
+
+/* Remove h4 from effect settings when inside collapsible */
+.caa-collapsible-body .caa-effect-settings h4 {
+    display: none;
 }
 
 /* Header override column */
@@ -1017,4 +1116,156 @@ tr.caa-responsive-field th label {
 
 .caa-animation-settings-viewport .caa-viewport-switcher {
     margin-bottom: 20px;
+}
+
+/* =========================================
+   Core Settings Row (Side-by-Side Layout)
+   ========================================= */
+
+.caa-core-settings-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 25px;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+}
+
+.caa-core-settings-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.caa-core-settings-field>label {
+    font-weight: 600;
+    color: #1d2327;
+    font-size: 13px;
+}
+
+.caa-core-settings-field input[type="text"],
+.caa-core-settings-field textarea {
+    width: 100%;
+}
+
+.caa-core-settings-field textarea {
+    resize: vertical;
+    min-height: 60px;
+    font-family: Consolas, Monaco, monospace;
+    font-size: 12px;
+}
+
+.caa-core-settings-field .description {
+    font-size: 12px;
+    color: #646970;
+    font-style: italic;
+    margin: 0;
+}
+
+.caa-field-logo input {
+    max-width: 220px;
+}
+
+@media screen and (max-width: 1200px) {
+    .caa-core-settings-row {
+        grid-template-columns: 1fr;
+    }
+
+    .caa-field-logo input {
+        max-width: 100%;
+    }
+}
+
+/* =========================================
+   Effect Selection - Horizontal Button Row
+   ========================================= */
+
+.caa-effect-selector-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.caa-effect-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    margin: 0;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: #50575e;
+    transition: all 0.15s ease;
+}
+
+.caa-effect-btn:hover {
+    border-color: #2271b1;
+    color: #2271b1;
+}
+
+.caa-effect-btn.caa-effect-btn-active {
+    background: #2271b1;
+    border-color: #2271b1;
+    color: #fff;
+}
+
+.caa-effect-btn input[type="radio"] {
+    display: none;
+}
+
+.caa-effect-settings-panel {
+    background: #f0f6fc;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 0;
+    min-height: 60px;
+}
+
+.caa-effect-settings-content {
+    display: none;
+    padding: 15px 20px;
+}
+
+.caa-effect-settings-content[style*="display: block"] {
+    display: block !important;
+}
+
+.caa-effect-settings-content .form-table {
+    margin: 0;
+    background: transparent;
+}
+
+.caa-effect-settings-content .form-table th {
+    width: 150px;
+    padding: 8px 10px 8px 0;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.caa-effect-settings-content .form-table td {
+    padding: 8px 0;
+}
+
+.caa-effect-settings-content .form-table .description {
+    font-size: 12px;
+    margin-top: 4px;
+    color: #50575e;
+}
+
+@media screen and (max-width: 600px) {
+    .caa-effect-selector-row {
+        gap: 6px;
+    }
+
+    .caa-effect-btn {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
 }
